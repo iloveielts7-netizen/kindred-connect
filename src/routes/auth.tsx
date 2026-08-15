@@ -1,0 +1,227 @@
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import { z } from "zod";
+
+import { Wordmark } from "@/components/brand";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
+
+const searchSchema = z.object({
+  mode: z.enum(["signin", "signup"]).optional(),
+});
+
+export const Route = createFileRoute("/auth")({
+  validateSearch: searchSchema,
+  head: () => ({
+    meta: [
+      { title: "Sign in to STRESS — private one-to-one" },
+      {
+        name: "description",
+        content: "Create a STRESS account or sign in to open your private rooms.",
+      },
+      { property: "og:title", content: "Sign in to STRESS" },
+      { property: "og:description", content: "Create an account and connect with one person." },
+    ],
+  }),
+  component: AuthPage,
+});
+
+const credentials = z.object({
+  email: z.string().email(),
+  password: z.string().min(10),
+  displayName: z.string().min(1).max(40).optional(),
+});
+
+function AuthPage() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { session } = useAuth();
+  const search = Route.useSearch();
+  const [mode, setMode] = useState<"signin" | "signup">(search.mode ?? "signup");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [ageOk, setAgeOk] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (session) void navigate({ to: "/rooms" });
+  }, [session, navigate]);
+
+  const isSignUp = mode === "signup";
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (isSignUp && !ageOk) {
+      toast.error(t("auth.ageRequired"));
+      return;
+    }
+    const parsed = credentials.safeParse({
+      email,
+      password,
+      displayName: isSignUp ? displayName : undefined,
+    });
+    if (!parsed.success) {
+      toast.error(isSignUp ? t("auth.passwordHint") : t("common.somethingWrong"));
+      return;
+    }
+
+    setBusy(true);
+    try {
+      if (isSignUp) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/rooms`,
+            data: { display_name: displayName.trim(), age_confirmed: true },
+          },
+        });
+        if (error) throw error;
+        if (!data.session) {
+          toast.success(t("auth.checkEmail"));
+          setMode("signin");
+        }
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("common.somethingWrong"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function google() {
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
+    if (result.error) {
+      toast.error(t("common.somethingWrong"));
+      return;
+    }
+    if (result.redirected) return;
+    void navigate({ to: "/rooms" });
+  }
+
+  return (
+    <div className="flex min-h-screen flex-col room-glow">
+      <header className="mx-auto flex w-full max-w-md items-center justify-between px-5 py-5 safe-t">
+        <Link to="/" aria-label="STRESS home">
+          <Wordmark />
+        </Link>
+      </header>
+
+      <main className="mx-auto w-full max-w-md flex-1 px-5 pb-10">
+        <div className="panel rise p-6">
+          <h1 className="text-2xl">{isSignUp ? t("auth.titleSignUp") : t("auth.titleSignIn")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {isSignUp ? t("auth.subSignUp") : t("auth.subSignIn")}
+          </p>
+
+          <form className="mt-6 space-y-4" onSubmit={submit}>
+            {isSignUp ? (
+              <div className="space-y-2">
+                <Label htmlFor="displayName">{t("auth.displayName")}</Label>
+                <Input
+                  id="displayName"
+                  autoComplete="nickname"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="h-12"
+                  required
+                  maxLength={40}
+                />
+                <p className="text-xs text-muted-foreground">{t("auth.displayNameHint")}</p>
+              </div>
+            ) : null}
+
+            <div className="space-y-2">
+              <Label htmlFor="email">{t("auth.email")}</Label>
+              <Input
+                id="email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-12"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">{t("auth.password")}</Label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete={isSignUp ? "new-password" : "current-password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-12"
+                required
+                minLength={10}
+              />
+              {isSignUp ? (
+                <p className="text-xs text-muted-foreground">{t("auth.passwordHint")}</p>
+              ) : null}
+            </div>
+
+            {isSignUp ? (
+              <label className="flex items-start gap-3 rounded-xl bg-secondary/60 p-3 text-sm">
+                <Checkbox
+                  checked={ageOk}
+                  onCheckedChange={(value) => setAgeOk(value === true)}
+                  aria-label={t("auth.ageConfirm")}
+                  className="mt-0.5"
+                />
+                <span>{t("auth.ageConfirm")}</span>
+              </label>
+            ) : null}
+
+            <Button type="submit" className="h-12 w-full text-base" disabled={busy}>
+              {isSignUp ? t("auth.createAccount") : t("auth.signIn")}
+            </Button>
+          </form>
+
+          <div className="my-5 flex items-center gap-3 text-xs uppercase tracking-widest text-muted-foreground">
+            <span className="h-px flex-1 bg-border" />
+            {t("auth.or")}
+            <span className="h-px flex-1 bg-border" />
+          </div>
+
+          <Button variant="secondary" className="h-12 w-full text-base" onClick={google}>
+            {t("auth.google")}
+          </Button>
+
+          <button
+            type="button"
+            className="mt-6 w-full text-sm text-muted-foreground underline underline-offset-4"
+            onClick={() => setMode(isSignUp ? "signin" : "signup")}
+          >
+            {isSignUp ? t("auth.switchToSignIn") : t("auth.switchToSignUp")}
+          </button>
+        </div>
+
+        <p className="mt-5 text-center text-xs leading-relaxed text-muted-foreground">
+          {t("legal.minAge")}{" "}
+          <Link to="/terms" className="underline underline-offset-4">
+            {t("settings.termsPage")}
+          </Link>{" "}
+          ·{" "}
+          <Link to="/privacy" className="underline underline-offset-4">
+            {t("settings.privacyPage")}
+          </Link>
+        </p>
+      </main>
+    </div>
+  );
+}
