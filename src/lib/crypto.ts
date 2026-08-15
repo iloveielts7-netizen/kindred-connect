@@ -79,6 +79,8 @@ export type SealedPayload = {
   cipherKeyA: string;
   /** sealed content key for the second participant */
   cipherKeyB: string;
+  /** raw content key — kept in memory only, so attachments can reuse it */
+  contentKey: Uint8Array;
 };
 
 /** Encrypt bytes for exactly two public keys. */
@@ -96,7 +98,32 @@ export async function sealForPair(
     cipherNonce: await b64(nonce),
     cipherKeyA: await b64(sodium.crypto_box_seal(contentKey, await unb64(publicKeyA))),
     cipherKeyB: await b64(sodium.crypto_box_seal(contentKey, await unb64(publicKeyB))),
+    contentKey,
   };
+}
+
+/** Encrypt attachment bytes with an existing per-message content key. */
+export async function encryptWithContentKey(bytes: Uint8Array, contentKey: Uint8Array) {
+  const sodium = await sodiumReady();
+  const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES);
+  return {
+    cipher: sodium.crypto_secretbox_easy(bytes, nonce, contentKey),
+    nonce: await b64(nonce),
+  };
+}
+
+export async function decryptWithContentKey(
+  cipher: Uint8Array,
+  nonceB64: string,
+  contentKey: Uint8Array,
+) {
+  const sodium = await sodiumReady();
+  return sodium.crypto_secretbox_open_easy(cipher, await unb64(nonceB64), contentKey);
+}
+
+/** Open the sealed content key of a message with this device's identity. */
+export async function unsealContentKey(sealedKey: string, identity: IdentityKeys) {
+  return openContentKey(sealedKey, identity);
 }
 
 export async function sealTextForPair(text: string, publicKeyA: string, publicKeyB: string) {
