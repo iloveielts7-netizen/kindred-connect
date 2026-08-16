@@ -26,7 +26,7 @@ export const en = {
     eyebrow: "Private one-to-one messaging & calls",
     headline: "Two people. One private connection.",
     sub: "STRESS is built for exactly two people at a time. Messages are end-to-end encrypted on your device, so we can't read them.",
-    start: "Create your account",
+    start: "Get my STRESS ID",
     signIn: "I already have an account",
     f1Title: "End-to-end encrypted messages",
     f1Body:

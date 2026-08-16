@@ -12,6 +12,17 @@ if (!i18next.isInitialized) {
     fallbackLng: "en",
     interpolation: { escapeValue: false },
     returnNull: false,
+    returnEmptyString: false,
+    // Safety net: never render a raw key like "landing.headline" in the UI.
+    parseMissingKeyHandler: (key) => {
+      const last = key.split(".").pop() ?? key;
+      const words = last
+        .replace(/[_-]+/g, " ")
+        .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+        .toLowerCase()
+        .trim();
+      return words.charAt(0).toUpperCase() + words.slice(1);
+    },
   });
 }
 
