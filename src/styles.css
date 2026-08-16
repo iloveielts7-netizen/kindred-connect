@@ -5,10 +5,12 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * STRESS design system — "a private room for two people".
- * Ink-green calm surfaces, warm ivory type, copper signal accent.
+ * STRESS design system — "Midnight Slate".
+ * Deep charcoal surfaces, muted slate panels, electric cyan accent,
+ * high-contrast white type with muted grey secondary.
  * All colors are oklch semantic tokens. Never hardcode colors in components.
  */
+
 
 @theme inline {
   --font-display: "Fraunces", ui-serif, Georgia, serif;
