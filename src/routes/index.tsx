@@ -59,10 +59,15 @@ function Landing() {
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button asChild size="lg" className="h-12 text-base">
-              <Link to={session ? "/rooms" : "/auth"} search={session ? undefined : { mode: "signup" }}>
-                {session ? t("onboarding.done") : t("landing.start")}
-              </Link>
+              {session ? (
+                <Link to="/rooms">{t("onboarding.done")}</Link>
+              ) : (
+                <Link to="/auth" search={{ mode: "signup" }}>
+                  {t("landing.start")}
+                </Link>
+              )}
             </Button>
+
             {!session && !loading ? (
               <Button asChild size="lg" variant="secondary" className="h-12 text-base">
                 <Link to="/auth" search={{ mode: "signin" }}>
