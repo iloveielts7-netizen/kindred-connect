@@ -59,13 +59,7 @@ function Landing() {
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button asChild size="lg" className="h-12 text-base">
-              {session ? (
-                <Link to="/rooms">{t("onboarding.done")}</Link>
-              ) : (
-                <Link to="/auth" search={{ mode: "signup" }}>
-                  {t("landing.start")}
-                </Link>
-              )}
+              <Link to="/connect">{t("landing.start")}</Link>
             </Button>
 
             {!session && !loading ? (
