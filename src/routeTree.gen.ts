@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as RoomsRouteImport } from './routes/rooms'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as TermsRouteImport } from './routes/terms'
 
@@ -30,6 +31,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RoomsRoute = RoomsRouteImport.update({
+  id: '/rooms',
+  path: '/rooms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SecurityRoute = SecurityRouteImport.update({
   id: '/security',
   path: '/security',
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
+  '/rooms': typeof RoomsRoute
   '/security': typeof SecurityRoute
   '/terms': typeof TermsRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
+  '/rooms': typeof RoomsRoute
   '/security': typeof SecurityRoute
   '/terms': typeof TermsRoute
 }
@@ -60,21 +68,24 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
+  '/rooms': typeof RoomsRoute
   '/security': typeof SecurityRoute
   '/terms': typeof TermsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/privacy' | '/security' | '/terms'
+  fullPaths: '/' | '/auth' | '/privacy' | '/rooms' | '/security' | '/terms'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/privacy' | '/security' | '/terms'
-  id: '__root__' | '/' | '/auth' | '/privacy' | '/security' | '/terms'
+  to: '/' | '/auth' | '/privacy' | '/rooms' | '/security' | '/terms'
+  id:
+    '__root__' | '/' | '/auth' | '/privacy' | '/rooms' | '/security' | '/terms'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   PrivacyRoute: typeof PrivacyRoute
+  RoomsRoute: typeof RoomsRoute
   SecurityRoute: typeof SecurityRoute
   TermsRoute: typeof TermsRoute
 }
@@ -102,6 +113,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/rooms': {
+      id: '/rooms'
+      path: '/rooms'
+      fullPath: '/rooms'
+      preLoaderRoute: typeof RoomsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/security': {
       id: '/security'
       path: '/security'
@@ -123,6 +141,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   PrivacyRoute: PrivacyRoute,
+  RoomsRoute: RoomsRoute,
   SecurityRoute: SecurityRoute,
   TermsRoute: TermsRoute,
 }
