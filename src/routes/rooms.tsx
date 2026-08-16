@@ -32,10 +32,13 @@ function RoomsPage() {
 
   return (
     <div className="flex min-h-screen flex-col room-glow">
-      <header className="mx-auto flex w-full max-w-md items-center justify-between px-5 py-5 safe-t">
+      <header className="mx-auto flex w-full max-w-md items-center justify-between gap-2 px-5 py-5 safe-t">
         <Link to="/" aria-label="STRESS home">
           <Wordmark />
         </Link>
+        <Button asChild variant="secondary" size="sm">
+          <Link to="/connect">{t("rooms.newRoom")}</Link>
+        </Button>
         <Button variant="ghost" size="sm" onClick={() => void signOut()}>
           {t("settings.signOut", { defaultValue: "Sign out" })}
         </Button>
