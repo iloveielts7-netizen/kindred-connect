@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * STRESS design system — "Midnight Slate".
+ * Wynse design system — "Midnight Slate".
  * Deep charcoal surfaces, muted slate panels, electric cyan accent,
  * high-contrast white type with muted grey secondary.
  * All colors are oklch semantic tokens. Never hardcode colors in components.

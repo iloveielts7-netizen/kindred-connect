@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-/** The STRESS mark: two rings sharing one private overlap. */
+/** The Wynse mark: two rings sharing one private overlap. */
 export function BrandMark({ className }: { className?: string }) {
   return (
     <svg
@@ -24,7 +24,7 @@ export function Wordmark({ className }: { className?: string }) {
   return (
     <span className={cn("flex items-center gap-2", className)}>
       <BrandMark />
-      <span className="font-display text-lg tracking-[0.24em] text-foreground">STRESS</span>
+      <span className="font-display text-lg tracking-[0.24em] text-foreground">Wynse</span>
     </span>
   );
 }

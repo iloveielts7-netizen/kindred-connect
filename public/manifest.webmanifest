@@ -1,6 +1,6 @@
 {
-  "name": "STRESS — private one-to-one",
-  "short_name": "STRESS",
+  "name": "Wynse — private one-to-one",
+  "short_name": "Wynse",
   "description": "A private room for two people: encrypted messages, HD audio and video calls.",
   "start_url": "/",
   "display": "standalone",

@@ -9,13 +9,13 @@ import { useAuth } from "@/hooks/useAuth";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "STRESS — A private room for two people" },
+      { title: "Wynse — A private room for two people" },
       {
         name: "description",
         content:
           "Two people, one private connection. End-to-end encrypted messages plus real HD audio and video calls, with no contact upload.",
       },
-      { property: "og:title", content: "STRESS — A private room for two people" },
+      { property: "og:title", content: "Wynse — A private room for two people" },
       {
         property: "og:description",
         content:

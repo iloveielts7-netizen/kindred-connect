@@ -83,11 +83,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         name: "viewport",
         content: "width=device-width, initial-scale=1, viewport-fit=cover",
       },
-      { title: "STRESS — Private one-to-one messaging and calls" },
+      { title: "Wynse — Private one-to-one messaging and calls" },
       {
         name: "description",
         content:
-          "STRESS is a private room for two people: end-to-end encrypted messages plus real HD audio and video calls.",
+          "Wynse is a private room for two people: end-to-end encrypted messages plus real HD audio and video calls.",
       },
       { name: "theme-color", content: "#0D0F12" },
       { property: "og:type", content: "website" },

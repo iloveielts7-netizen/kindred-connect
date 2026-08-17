@@ -19,16 +19,16 @@ export const Route = createFileRoute("/connect")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
-      { title: "Your STRESS ID — connect with one person" },
+      { title: "Your Wynse ID — connect with one person" },
       {
         name: "description",
         content:
-          "Show your STRESS ID and QR code, or enter someone else's ID to open a private one-to-one room.",
+          "Show your Wynse ID and QR code, or enter someone else's ID to open a private one-to-one room.",
       },
-      { property: "og:title", content: "Your STRESS ID — STRESS" },
+      { property: "og:title", content: "Your Wynse ID — Wynse" },
       {
         property: "og:description",
-        content: "Share your STRESS ID or QR code to start a private room for two.",
+        content: "Share your Wynse ID or QR code to start a private room for two.",
       },
     ],
   }),
@@ -80,7 +80,7 @@ function ConnectPage() {
     const link = stressIdLink(profile.stress_id);
     if (typeof navigator.share === "function") {
       try {
-        await navigator.share({ title: "STRESS", text: profile.stress_id, url: link });
+        await navigator.share({ title: "Wynse", text: profile.stress_id, url: link });
         return;
       } catch {
         /* user dismissed */
@@ -128,7 +128,7 @@ function ConnectPage() {
   return (
     <div className="flex min-h-screen flex-col room-glow">
       <header className="mx-auto flex w-full max-w-md items-center justify-between px-5 py-5 safe-t">
-        <Link to="/" aria-label="STRESS home">
+        <Link to="/" aria-label="Wynse home">
           <Wordmark />
         </Link>
         <Button asChild variant="ghost" size="sm">

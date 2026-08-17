@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/security")({
   head: () => ({
     meta: [
-      { title: "How STRESS protects you — security model" },
+      { title: "How Wynse protects you — security model" },
       {
         name: "description",
         content:
-          "Plain-language explanation of STRESS encryption: what is end-to-end encrypted, what metadata exists, and what we cannot claim.",
+          "Plain-language explanation of Wynse encryption: what is end-to-end encrypted, what metadata exists, and what we cannot claim.",
       },
-      { property: "og:title", content: "STRESS security model, in plain language" },
+      { property: "og:title", content: "Wynse security model, in plain language" },
       {
         property: "og:description",
         content: "What is encrypted, what isn't, and what we can never see.",
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/security")({
 
 function SecurityPage() {
   return (
-    <LegalShell title="How STRESS protects you">
+    <LegalShell title="How Wynse protects you">
       <p className="lead">
         This page explains our security model in everyday language. We would rather be honest than
         impressive.
@@ -54,7 +54,7 @@ function SecurityPage() {
       <h2>What is <em>not</em> end-to-end encrypted</h2>
       <ul>
         <li>
-          <strong>Your account details.</strong> Your email address, STRESS ID, display name and
+          <strong>Your account details.</strong> Your email address, Wynse ID, display name and
           public key are stored on the server so people can reach you.
         </li>
         <li>
@@ -87,12 +87,12 @@ function SecurityPage() {
         <li>We do not scan, analyse or train on your conversations, and we never send them to an AI service.</li>
         <li>We do not record calls or store call media.</li>
         <li>We do not build hidden administrator access or backdoors to your conversations.</li>
-        <li>We do not upload your contact book — you connect by STRESS ID or QR code.</li>
+        <li>We do not upload your contact book — you connect by Wynse ID or QR code.</li>
       </ul>
 
       <h2>What we will not claim</h2>
       <p>
-        We will not tell you STRESS is impossible to hack or that it offers absolute privacy. No
+        We will not tell you Wynse is impossible to hack or that it offers absolute privacy. No
         software can promise that. A compromised device, a screenshot taken by the other person, or a
         weak account password can all expose a conversation regardless of encryption.
       </p>
@@ -100,7 +100,7 @@ function SecurityPage() {
       <h2>Legal requests</h2>
       <p>
         If we receive a valid legal request, we can only produce what we actually hold: account
-        identifiers such as email address and STRESS ID, account creation time, and the limited
+        identifiers such as email address and Wynse ID, account creation time, and the limited
         delivery metadata described above. We cannot produce message content, media, or call audio
         and video, because we cannot read them. We do not build exceptional access for anyone,
         including law enforcement.
@@ -119,7 +119,7 @@ export function LegalShell({ title, children }: { title: string; children: React
   return (
     <div className="min-h-screen room-glow">
       <header className="mx-auto flex max-w-3xl items-center justify-between px-5 py-5 safe-t">
-        <Link to="/" aria-label="STRESS home">
+        <Link to="/" aria-label="Wynse home">
           <Wordmark />
         </Link>
         <Button asChild variant="ghost" size="sm">
