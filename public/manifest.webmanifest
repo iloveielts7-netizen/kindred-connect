@@ -1,7 +1,7 @@
 {
-  "name": "Wynse — private one-to-one",
+  "name": "Wynse — Safe Exchange",
   "short_name": "Wynse",
-  "description": "A private room for two people: encrypted messages, HD audio and video calls.",
+  "description": "Wynse — Safe Exchange. A private room for two people: encrypted messages, HD audio and video calls.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

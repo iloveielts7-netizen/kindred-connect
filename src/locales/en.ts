@@ -4,7 +4,7 @@
 export const en = {
   brand: {
     name: "Wynse",
-    tagline: "A private room for two people, anywhere in the world.",
+    tagline: "Safe Exchange",
   },
   common: {
     continue: "Continue",
