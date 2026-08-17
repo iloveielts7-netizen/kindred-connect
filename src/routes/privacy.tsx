@@ -5,13 +5,13 @@ import { LegalShell } from "@/routes/security";
 export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
-      { title: "STRESS privacy policy — plain language" },
+      { title: "Wynse privacy policy — plain language" },
       {
         name: "description",
         content:
-          "What STRESS collects, what it cannot read, how long data is kept, and how to export or delete your account.",
+          "What Wynse collects, what it cannot read, how long data is kept, and how to export or delete your account.",
       },
-      { property: "og:title", content: "STRESS privacy policy" },
+      { property: "og:title", content: "Wynse privacy policy" },
       { property: "og:description", content: "Minimal data, no advertising, no conversation scanning." },
     ],
   }),
@@ -30,7 +30,7 @@ function PrivacyPage() {
       <ul>
         <li>
           <strong>Account:</strong> email address (or Google account identifier), password hash
-          handled by our authentication provider, display name, STRESS ID, public encryption key,
+          handled by our authentication provider, display name, Wynse ID, public encryption key,
           account creation time and age confirmation.
         </li>
         <li>
@@ -93,11 +93,11 @@ function PrivacyPage() {
       </p>
 
       <h2>Children</h2>
-      <p>You must be at least 16 years old to create a STRESS account.</p>
+      <p>You must be at least 16 years old to create a Wynse account.</p>
 
       <h2>Contact</h2>
       <p>
-        Privacy questions and security reports: <strong>privacy@stress.example</strong> — replace
+        Privacy questions and security reports: <strong>privacy@wynse.app</strong> — replace
         this with your real contact address before launch.
       </p>
     </LegalShell>

@@ -21,12 +21,12 @@ export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
-      { title: "Sign in to STRESS — private one-to-one" },
+      { title: "Sign in to Wynse — private one-to-one" },
       {
         name: "description",
-        content: "Create a STRESS account or sign in to open your private rooms.",
+        content: "Create a Wynse account or sign in to open your private rooms.",
       },
-      { property: "og:title", content: "Sign in to STRESS" },
+      { property: "og:title", content: "Sign in to Wynse" },
       { property: "og:description", content: "Create an account and connect with one person." },
     ],
   }),
@@ -115,7 +115,7 @@ function AuthPage() {
   return (
     <div className="flex min-h-screen flex-col room-glow">
       <header className="mx-auto flex w-full max-w-md items-center justify-between px-5 py-5 safe-t">
-        <Link to="/" aria-label="STRESS home">
+        <Link to="/" aria-label="Wynse home">
           <Wordmark />
         </Link>
       </header>

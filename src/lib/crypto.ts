@@ -1,5 +1,5 @@
 /**
- * STRESS end-to-end encryption.
+ * Wynse end-to-end encryption.
  *
  * Nothing here is home-made: every primitive comes from libsodium
  * (libsodium-wrappers-sumo), a widely reviewed implementation of NaCl.

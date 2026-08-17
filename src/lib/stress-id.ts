@@ -1,4 +1,4 @@
-/** STRESS IDs: 12 unambiguous characters, grouped for reading aloud. */
+/** Wynse IDs: 12 unambiguous characters, grouped for reading aloud. */
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no I, O, 0, 1
 
 export function generateStressId(): string {
@@ -16,15 +16,15 @@ export function normalizeStressId(input: string): string {
   return (cleaned.match(/.{1,4}/g) ?? []).join("-");
 }
 
-export const STRESS_ID_PATTERN = /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+export const Wynse_ID_PATTERN = /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
 
 export function isValidStressId(value: string): boolean {
-  return STRESS_ID_PATTERN.test(value);
+  return Wynse_ID_PATTERN.test(value);
 }
 
 /** Payload encoded in the QR code. */
 export function stressIdLink(stressId: string): string {
-  const origin = typeof window === "undefined" ? "https://stress.app" : window.location.origin;
+  const origin = typeof window === "undefined" ? "https://wynse.app" : window.location.origin;
   return `${origin}/connect?id=${stressId}`;
 }
 

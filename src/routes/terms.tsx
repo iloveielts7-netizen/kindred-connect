@@ -5,12 +5,12 @@ import { LegalShell } from "@/routes/security";
 export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
-      { title: "STRESS terms of service" },
+      { title: "Wynse terms of service" },
       {
         name: "description",
-        content: "The simple rules for using STRESS: minimum age 16, no abuse, and what we promise.",
+        content: "The simple rules for using Wynse: minimum age 16, no abuse, and what we promise.",
       },
-      { property: "og:title", content: "STRESS terms of service" },
+      { property: "og:title", content: "Wynse terms of service" },
       { property: "og:description", content: "Plain-language terms for a one-to-one private messenger." },
     ],
   }),
@@ -26,7 +26,7 @@ function TermsPage() {
       </p>
 
       <h2>1. Minimum age</h2>
-      <p>You must be at least 16 years old to create or use a STRESS account.</p>
+      <p>You must be at least 16 years old to create or use a Wynse account.</p>
 
       <h2>2. Your account</h2>
       <p>
@@ -34,7 +34,7 @@ function TermsPage() {
         so losing that device means losing access to older messages. We cannot recover them for you.
       </p>
 
-      <h2>3. What STRESS is for</h2>
+      <h2>3. What Wynse is for</h2>
       <p>
         Private conversation between exactly two people. Each room holds two participants — there are
         no groups, channels or broadcast tools.
@@ -45,7 +45,7 @@ function TermsPage() {
         <li>Do not harass, threaten, stalk or abuse anyone.</li>
         <li>Do not send illegal content, including sexual content involving minors.</li>
         <li>Do not impersonate other people or organisations.</li>
-        <li>Do not spam STRESS IDs or automate connection requests; requests are rate-limited.</li>
+        <li>Do not spam Wynse IDs or automate connection requests; requests are rate-limited.</li>
         <li>Do not attempt to break, overload or probe the service without permission.</li>
       </ul>
 
@@ -60,7 +60,7 @@ function TermsPage() {
       <h2>6. Availability</h2>
       <p>
         We work hard on reliability but we do not promise uninterrupted service, and we do not claim
-        STRESS is impossible to hack. Calls depend on your network and your device.
+        Wynse is impossible to hack. Calls depend on your network and your device.
       </p>
 
       <h2>7. Ending your account</h2>
@@ -78,7 +78,7 @@ function TermsPage() {
 
       <h2>9. Contact</h2>
       <p>
-        <strong>legal@stress.example</strong> — replace this with your real contact address before
+        <strong>legal@wynse.app</strong> — replace this with your real contact address before
         launch.
       </p>
     </LegalShell>
