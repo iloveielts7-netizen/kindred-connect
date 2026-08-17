@@ -35,7 +35,7 @@ export const Route = createFileRoute("/auth")({
 
 const credentials = z.object({
   email: z.string().email(),
-  password: z.string().min(10),
+  password: z.string().min(8),
   displayName: z.string().min(1).max(40).optional(),
 });
 
@@ -168,7 +168,7 @@ function AuthPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="h-12"
                 required
-                minLength={10}
+                minLength={8}
               />
               {isSignUp ? (
                 <p className="text-xs text-muted-foreground">{t("auth.passwordHint")}</p>
