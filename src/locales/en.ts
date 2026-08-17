@@ -234,7 +234,7 @@ export const en = {
     submitted: "Report submitted. Thank you.",
   },
   legal: {
-    minAge: "You must be at least 16 years old to use Wynse.",
+    minAge: "You must be at least 13 years old to use Wynse.",
   },
 } as const;
 
