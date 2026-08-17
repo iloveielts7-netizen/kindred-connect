@@ -1,6 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { KeyRound, Lock, MessageCircle, PhoneCall, ScanLine, ShieldCheck, Video } from "lucide-react";
-import { useTranslation } from "react-i18next";
 
 import { Wordmark } from "@/components/brand";
 import { Button } from "@/components/ui/button";
@@ -27,7 +26,6 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
-  const { t } = useTranslation();
   const { session, loading } = useAuth();
 
   return (
@@ -36,12 +34,10 @@ function Landing() {
         <Wordmark />
         <nav className="flex items-center gap-1">
           <Button asChild variant="ghost" size="sm">
-            <Link to="/security">{t("landing.security")}</Link>
+            <Link to="/security">Security</Link>
           </Button>
           <Button asChild variant="secondary" size="sm">
-            <Link to={session ? "/rooms" : "/auth"}>
-              {session ? t("rooms.title") : t("auth.signIn")}
-            </Link>
+            <Link to={session ? "/rooms" : "/auth"}>{session ? "Rooms" : "Sign In"}</Link>
           </Button>
         </nav>
       </header>
@@ -49,23 +45,23 @@ function Landing() {
       <main className="mx-auto max-w-5xl px-5 pb-20">
         <section className="rise pt-10 sm:pt-16">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">
-            {t("landing.eyebrow")}
+            WYNSE MESSENGER
           </p>
           <h1 className="mt-4 max-w-2xl text-4xl leading-[1.05] sm:text-6xl">
-            {t("landing.headline")}
+            Private Communication, Simplified
           </h1>
           <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            {t("landing.sub")}
+            Safe Exchange
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button asChild size="lg" className="h-12 text-base">
-              <Link to="/connect">{t("landing.start")}</Link>
+              <Link to="/connect">Get Started</Link>
             </Button>
 
             {!session && !loading ? (
               <Button asChild size="lg" variant="secondary" className="h-12 text-base">
                 <Link to="/auth" search={{ mode: "signin" }}>
-                  {t("landing.signIn")}
+                  Sign In
                 </Link>
               </Button>
             ) : null}
@@ -73,9 +69,21 @@ function Landing() {
         </section>
 
         <section className="mt-16 grid gap-4 sm:grid-cols-3">
-          <Feature icon={<Lock className="size-5" />} title={t("landing.f1Title")} body={t("landing.f1Body")} />
-          <Feature icon={<Video className="size-5" />} title={t("landing.f2Title")} body={t("landing.f2Body")} />
-          <Feature icon={<ScanLine className="size-5" />} title={t("landing.f3Title")} body={t("landing.f3Body")} />
+          <Feature
+            icon={<Lock className="size-5" />}
+            title="End-to-End Security"
+            body="Your messages stay strictly between you and your recipient."
+          />
+          <Feature
+            icon={<Video className="size-5" />}
+            title="Real HD Calls"
+            body="Crisp audio and HD video, peer-to-peer, with nothing recorded."
+          />
+          <Feature
+            icon={<ScanLine className="size-5" />}
+            title="Connect by QR"
+            body="Share a Wynse ID or scan a QR code. No contact upload, ever."
+          />
         </section>
 
         <section className="panel mt-6 p-6">
@@ -89,25 +97,27 @@ function Landing() {
         </section>
 
         <section className="panel mt-6 p-6">
-          <h2 className="text-lg">{t("landing.honest")}</h2>
+          <h2 className="text-lg">Honest about privacy</h2>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            {t("landing.honestBody")}
+            Message content and files are encrypted on your device, so the server only ever stores
+            ciphertext. It still knows who talks to whom and when, because that is what delivery
+            requires — we would rather say so plainly than promise magic.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button asChild variant="secondary" size="sm">
-              <Link to="/security">{t("landing.security")}</Link>
+              <Link to="/security">Security</Link>
             </Button>
             <Button asChild variant="ghost" size="sm">
-              <Link to="/privacy">{t("landing.privacy")}</Link>
+              <Link to="/privacy">Privacy</Link>
             </Button>
             <Button asChild variant="ghost" size="sm">
-              <Link to="/terms">{t("landing.terms")}</Link>
+              <Link to="/terms">Terms</Link>
             </Button>
           </div>
         </section>
 
         <p className="mt-10 text-center font-display text-sm tracking-[0.18em] text-muted-foreground">
-          {t("brand.tagline")}
+          Wynse — Safe Exchange
         </p>
       </main>
     </div>
