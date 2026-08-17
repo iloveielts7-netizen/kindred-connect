@@ -83,13 +83,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         name: "viewport",
         content: "width=device-width, initial-scale=1, viewport-fit=cover",
       },
-      { title: "Wynse — Private one-to-one messaging and calls" },
+      { title: "Wynse — Safe Exchange" },
       {
         name: "description",
         content:
           "Wynse is a private room for two people: end-to-end encrypted messages plus real HD audio and video calls.",
       },
       { name: "theme-color", content: "#0D0F12" },
+      { property: "og:site_name", content: "Wynse" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
