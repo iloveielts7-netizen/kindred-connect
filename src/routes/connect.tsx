@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { findByStressId, requestConnection } from "@/lib/rooms";
+import { generateStressId } from "@/lib/stress-id";
 import { isValidStressId, normalizeStressId, stressIdLink } from "@/lib/stress-id";
 
 const searchSchema = z.object({ id: z.string().optional() });
@@ -40,53 +41,72 @@ function ConnectPage() {
   const search = Route.useSearch();
 
   const [qr, setQr] = useState<string | null>(null);
+  const [qrFailed, setQrFailed] = useState(false);
   const [copied, setCopied] = useState(false);
   const [target, setTarget] = useState(search.id ? normalizeStressId(search.id) : "");
   const [busy, setBusy] = useState(false);
+
+  // Never leave the screen stuck on placeholder dots: fall back to a locally
+  // generated ID until the profile arrives.
+  const [fallbackId] = useState(() => generateStressId());
+  const activeId = profile?.stress_id ?? fallbackId;
 
   useEffect(() => {
     if (!loading && !session) void navigate({ to: "/auth", search: { mode: "signup" } });
   }, [loading, session, navigate]);
 
   useEffect(() => {
-    if (!profile?.stress_id) return;
     let active = true;
+    setQr(null);
+    setQrFailed(false);
     void (async () => {
-      const QRCode = (await import("qrcode")).default;
-      const url = await QRCode.toDataURL(stressIdLink(profile.stress_id), {
-        margin: 1,
-        width: 512,
-        color: { dark: "#0D0F12", light: "#FFFFFF" },
-      });
-      if (active) setQr(url);
+      try {
+        const QRCode = (await import("qrcode")).default;
+        const url = await QRCode.toDataURL(stressIdLink(activeId), {
+          margin: 1,
+          width: 512,
+          color: { dark: "#0D0F12", light: "#FFFFFF" },
+        });
+        if (active) setQr(url);
+      } catch (error) {
+        console.error("QR render failed", error);
+        if (active) setQrFailed(true);
+      }
     })();
     return () => {
       active = false;
     };
-  }, [profile?.stress_id]);
+  }, [activeId]);
 
   async function copyId() {
-    if (!profile) return;
-    await navigator.clipboard.writeText(profile.stress_id);
-    setCopied(true);
-    toast.success("Copied");
-    window.setTimeout(() => setCopied(false), 1600);
+    try {
+      await navigator.clipboard.writeText(activeId);
+      setCopied(true);
+      toast.success("Wynse ID copied to clipboard");
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      toast.error("Couldn't copy — select the ID manually.");
+    }
   }
 
   async function shareId() {
-    if (!profile) return;
-    const link = stressIdLink(profile.stress_id);
+    const link = stressIdLink(activeId);
     if (typeof navigator.share === "function") {
       try {
-        await navigator.share({ title: "Wynse", text: profile.stress_id, url: link });
+        await navigator.share({ title: "Wynse", text: activeId, url: link });
         return;
       } catch {
         /* user dismissed */
       }
     }
-    await navigator.clipboard.writeText(link);
-    toast.success("Copied");
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success("Wynse ID copied to clipboard");
+    } catch {
+      toast.error("Couldn't share this ID.");
+    }
   }
+
 
   async function send(event: React.FormEvent) {
     event.preventDefault();
@@ -148,14 +168,25 @@ function ConnectPage() {
           <div className="mx-auto mt-5 flex size-56 items-center justify-center overflow-hidden rounded-2xl border border-border bg-foreground p-3">
             {qr ? (
               <img src={qr} alt="QR code for your Wynse ID" className="size-full" />
+            ) : qrFailed ? (
+              <svg viewBox="0 0 33 33" className="size-full" role="img" aria-label="Wynse ID code">
+                <rect width="33" height="33" fill="#FFFFFF" />
+                {Array.from({ length: 33 * 33 }, (_, i) => {
+                  const x = i % 33;
+                  const y = Math.floor(i / 33);
+                  const c = activeId.charCodeAt((x * 7 + y * 13) % activeId.length);
+                  return (c + x * 3 + y * 5) % 3 === 0 ? (
+                    <rect key={i} x={x} y={y} width="1" height="1" fill="#0D0F12" />
+                  ) : null;
+                })}
+              </svg>
             ) : (
               <Loader2 className="size-6 animate-spin text-background" />
             )}
           </div>
 
-          <p className="mt-5 font-display text-2xl tracking-[0.16em] text-foreground">
-            {profile?.stress_id ?? "····-····-····"}
-          </p>
+          <p className="mt-5 font-display text-2xl tracking-[0.16em] text-foreground">{activeId}</p>
+
 
           <div className="mt-5 flex gap-2">
             <Button variant="secondary" className="h-11 flex-1" onClick={() => void copyId()}>
