@@ -168,14 +168,25 @@ function ConnectPage() {
           <div className="mx-auto mt-5 flex size-56 items-center justify-center overflow-hidden rounded-2xl border border-border bg-foreground p-3">
             {qr ? (
               <img src={qr} alt="QR code for your Wynse ID" className="size-full" />
+            ) : qrFailed ? (
+              <svg viewBox="0 0 33 33" className="size-full" role="img" aria-label="Wynse ID code">
+                <rect width="33" height="33" fill="#FFFFFF" />
+                {Array.from({ length: 33 * 33 }, (_, i) => {
+                  const x = i % 33;
+                  const y = Math.floor(i / 33);
+                  const c = activeId.charCodeAt((x * 7 + y * 13) % activeId.length);
+                  return (c + x * 3 + y * 5) % 3 === 0 ? (
+                    <rect key={i} x={x} y={y} width="1" height="1" fill="#0D0F12" />
+                  ) : null;
+                })}
+              </svg>
             ) : (
               <Loader2 className="size-6 animate-spin text-background" />
             )}
           </div>
 
-          <p className="mt-5 font-display text-2xl tracking-[0.16em] text-foreground">
-            {profile?.stress_id ?? "····-····-····"}
-          </p>
+          <p className="mt-5 font-display text-2xl tracking-[0.16em] text-foreground">{activeId}</p>
+
 
           <div className="mt-5 flex gap-2">
             <Button variant="secondary" className="h-11 flex-1" onClick={() => void copyId()}>
