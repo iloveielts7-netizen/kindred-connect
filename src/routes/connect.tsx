@@ -40,53 +40,72 @@ function ConnectPage() {
   const search = Route.useSearch();
 
   const [qr, setQr] = useState<string | null>(null);
+  const [qrFailed, setQrFailed] = useState(false);
   const [copied, setCopied] = useState(false);
   const [target, setTarget] = useState(search.id ? normalizeStressId(search.id) : "");
   const [busy, setBusy] = useState(false);
+
+  // Never leave the screen stuck on placeholder dots: fall back to a locally
+  // generated ID until the profile arrives.
+  const [fallbackId] = useState(() => generateStressId());
+  const activeId = profile?.stress_id ?? fallbackId;
 
   useEffect(() => {
     if (!loading && !session) void navigate({ to: "/auth", search: { mode: "signup" } });
   }, [loading, session, navigate]);
 
   useEffect(() => {
-    if (!profile?.stress_id) return;
     let active = true;
+    setQr(null);
+    setQrFailed(false);
     void (async () => {
-      const QRCode = (await import("qrcode")).default;
-      const url = await QRCode.toDataURL(stressIdLink(profile.stress_id), {
-        margin: 1,
-        width: 512,
-        color: { dark: "#0D0F12", light: "#FFFFFF" },
-      });
-      if (active) setQr(url);
+      try {
+        const QRCode = (await import("qrcode")).default;
+        const url = await QRCode.toDataURL(stressIdLink(activeId), {
+          margin: 1,
+          width: 512,
+          color: { dark: "#0D0F12", light: "#FFFFFF" },
+        });
+        if (active) setQr(url);
+      } catch (error) {
+        console.error("QR render failed", error);
+        if (active) setQrFailed(true);
+      }
     })();
     return () => {
       active = false;
     };
-  }, [profile?.stress_id]);
+  }, [activeId]);
 
   async function copyId() {
-    if (!profile) return;
-    await navigator.clipboard.writeText(profile.stress_id);
-    setCopied(true);
-    toast.success("Copied");
-    window.setTimeout(() => setCopied(false), 1600);
+    try {
+      await navigator.clipboard.writeText(activeId);
+      setCopied(true);
+      toast.success("Wynse ID copied to clipboard");
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      toast.error("Couldn't copy — select the ID manually.");
+    }
   }
 
   async function shareId() {
-    if (!profile) return;
-    const link = stressIdLink(profile.stress_id);
+    const link = stressIdLink(activeId);
     if (typeof navigator.share === "function") {
       try {
-        await navigator.share({ title: "Wynse", text: profile.stress_id, url: link });
+        await navigator.share({ title: "Wynse", text: activeId, url: link });
         return;
       } catch {
         /* user dismissed */
       }
     }
-    await navigator.clipboard.writeText(link);
-    toast.success("Copied");
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success("Wynse ID copied to clipboard");
+    } catch {
+      toast.error("Couldn't share this ID.");
+    }
   }
+
 
   async function send(event: React.FormEvent) {
     event.preventDefault();
