@@ -1,6 +1,5 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -40,7 +39,6 @@ const credentials = z.object({
 });
 
 function AuthPage() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { session } = useAuth();
   const search = Route.useSearch();
@@ -60,7 +58,7 @@ function AuthPage() {
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (isSignUp && !ageOk) {
-      toast.error(t("auth.ageRequired"));
+      toast.error("Please confirm you are 13 years of age or older.");
       return;
     }
     const parsed = credentials.safeParse({
@@ -69,7 +67,9 @@ function AuthPage() {
       displayName: isSignUp ? displayName : undefined,
     });
     if (!parsed.success) {
-      toast.error(isSignUp ? t("auth.passwordHint") : t("common.somethingWrong"));
+      toast.error(
+        isSignUp ? "Must be at least 8 characters" : "Something went wrong. Please try again.",
+      );
       return;
     }
 
@@ -86,7 +86,7 @@ function AuthPage() {
         });
         if (error) throw error;
         if (!data.session) {
-          toast.success(t("auth.checkEmail"));
+          toast.success("Check your email to confirm your account.");
           setMode("signin");
         }
       } else {
@@ -94,7 +94,7 @@ function AuthPage() {
         if (error) throw error;
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("common.somethingWrong"));
+      toast.error(error instanceof Error ? error.message : "Something went wrong.");
     } finally {
       setBusy(false);
     }
@@ -105,7 +105,7 @@ function AuthPage() {
       redirect_uri: window.location.origin,
     });
     if (result.error) {
-      toast.error(t("common.somethingWrong"));
+      toast.error("Something went wrong.");
       return;
     }
     if (result.redirected) return;
@@ -122,15 +122,17 @@ function AuthPage() {
 
       <main className="mx-auto w-full max-w-md flex-1 px-5 pb-10">
         <div className="panel rise p-6">
-          <h1 className="text-2xl">{isSignUp ? t("auth.titleSignUp") : t("auth.titleSignIn")}</h1>
+          <h1 className="text-2xl">{isSignUp ? "Create your Wynse account" : "Welcome Back"}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {isSignUp ? t("auth.subSignUp") : t("auth.subSignIn")}
+            {isSignUp
+              ? "Enter your details to start safe exchanges"
+              : "Sign in to access your Wynse account"}
           </p>
 
           <form className="mt-6 space-y-4" onSubmit={submit}>
             {isSignUp ? (
               <div className="space-y-2">
-                <Label htmlFor="displayName">{t("auth.displayName")}</Label>
+                <Label htmlFor="displayName">Display Name</Label>
                 <Input
                   id="displayName"
                   autoComplete="nickname"
@@ -140,12 +142,12 @@ function AuthPage() {
                   required
                   maxLength={40}
                 />
-                <p className="text-xs text-muted-foreground">{t("auth.displayNameHint")}</p>
+                <p className="text-xs text-muted-foreground">How you will appear to others</p>
               </div>
             ) : null}
 
             <div className="space-y-2">
-              <Label htmlFor="email">{t("auth.email")}</Label>
+              <Label htmlFor="email">Email Address</Label>
               <Input
                 id="email"
                 type="email"
@@ -159,7 +161,7 @@ function AuthPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">{t("auth.password")}</Label>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -171,7 +173,7 @@ function AuthPage() {
                 minLength={8}
               />
               {isSignUp ? (
-                <p className="text-xs text-muted-foreground">{t("auth.passwordHint")}</p>
+                <p className="text-xs text-muted-foreground">Must be at least 8 characters</p>
               ) : null}
             </div>
 
@@ -180,26 +182,26 @@ function AuthPage() {
                 <Checkbox
                   checked={ageOk}
                   onCheckedChange={(value) => setAgeOk(value === true)}
-                  aria-label={t("auth.ageConfirm")}
+                  aria-label="I confirm I am 13 years of age or older"
                   className="mt-0.5"
                 />
-                <span>{t("auth.ageConfirm")}</span>
+                <span>I confirm I am 13 years of age or older</span>
               </label>
             ) : null}
 
             <Button type="submit" className="h-12 w-full text-base" disabled={busy}>
-              {isSignUp ? t("auth.createAccount") : t("auth.signIn")}
+              {isSignUp ? "Create Account" : "Sign In"}
             </Button>
           </form>
 
           <div className="my-5 flex items-center gap-3 text-xs uppercase tracking-widest text-muted-foreground">
             <span className="h-px flex-1 bg-border" />
-            {t("auth.or")}
+            OR
             <span className="h-px flex-1 bg-border" />
           </div>
 
           <Button variant="secondary" className="h-12 w-full text-base" onClick={google}>
-            {t("auth.google")}
+            Continue with Google
           </Button>
 
           <button
@@ -207,18 +209,17 @@ function AuthPage() {
             className="mt-6 w-full text-sm text-muted-foreground underline underline-offset-4"
             onClick={() => setMode(isSignUp ? "signin" : "signup")}
           >
-            {isSignUp ? t("auth.switchToSignIn") : t("auth.switchToSignUp")}
+            {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
           </button>
         </div>
 
         <p className="mt-5 text-center text-xs leading-relaxed text-muted-foreground">
-          {t("legal.minAge")}{" "}
           <Link to="/terms" className="underline underline-offset-4">
-            {t("settings.termsPage")}
+            Terms of Service
           </Link>{" "}
           ·{" "}
           <Link to="/privacy" className="underline underline-offset-4">
-            {t("settings.privacyPage")}
+            Privacy Policy
           </Link>
         </p>
       </main>

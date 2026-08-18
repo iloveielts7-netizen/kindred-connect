@@ -1,7 +1,6 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Check, Copy, Loader2, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -36,7 +35,6 @@ export const Route = createFileRoute("/connect")({
 });
 
 function ConnectPage() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { session, loading, profile } = useAuth();
   const search = Route.useSearch();
@@ -71,7 +69,7 @@ function ConnectPage() {
     if (!profile) return;
     await navigator.clipboard.writeText(profile.stress_id);
     setCopied(true);
-    toast.success(t("common.copied"));
+    toast.success("Copied");
     window.setTimeout(() => setCopied(false), 1600);
   }
 
@@ -87,7 +85,7 @@ function ConnectPage() {
       }
     }
     await navigator.clipboard.writeText(link);
-    toast.success(t("common.copied"));
+    toast.success("Copied");
   }
 
   async function send(event: React.FormEvent) {
@@ -95,30 +93,30 @@ function ConnectPage() {
     if (!session || !profile) return;
     const id = normalizeStressId(target);
     if (!isValidStressId(id)) {
-      toast.error(t("connect.notFound"));
+      toast.error("We couldn't find that Wynse ID.");
       return;
     }
     if (id === profile.stress_id) {
-      toast.error(t("connect.self"));
+      toast.error("That's your own Wynse ID.");
       return;
     }
     setBusy(true);
     try {
       const found = await findByStressId(id);
       if (!found) {
-        toast.error(t("connect.notFound"));
+        toast.error("We couldn't find that Wynse ID.");
         return;
       }
       await requestConnection(session.user.id, found.id);
-      toast.success(t("connect.sent"));
+      toast.success("Connection request sent.");
       setTarget("");
       void navigate({ to: "/rooms" });
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
       if (message.includes("duplicate") || message.includes("unique")) {
-        toast.error(t("connect.exists"));
+        toast.error("You already have a room or request with this person.");
       } else {
-        toast.error(t("common.somethingWrong"));
+        toast.error("Something went wrong.");
       }
     } finally {
       setBusy(false);
@@ -132,22 +130,24 @@ function ConnectPage() {
           <Wordmark />
         </Link>
         <Button asChild variant="ghost" size="sm">
-          <Link to="/rooms">{t("rooms.title")}</Link>
+          <Link to="/rooms">Rooms</Link>
         </Button>
       </header>
 
       <main className="mx-auto w-full max-w-md flex-1 px-5 pb-12">
-        <h1 className="text-2xl">{t("connect.title")}</h1>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{t("connect.body")}</p>
+        <h1 className="text-2xl">Connect with Wynse</h1>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          Share your unique ID or QR code to initiate a secure connection.
+        </p>
 
         <section className="panel rise mt-6 p-6 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">
-            {t("connect.yourId")}
+            YOUR WYNSE ID
           </p>
 
           <div className="mx-auto mt-5 flex size-56 items-center justify-center overflow-hidden rounded-2xl border border-border bg-foreground p-3">
             {qr ? (
-              <img src={qr} alt={t("connect.scan")} className="size-full" />
+              <img src={qr} alt="QR code for your Wynse ID" className="size-full" />
             ) : (
               <Loader2 className="size-6 animate-spin text-background" />
             )}
@@ -160,29 +160,29 @@ function ConnectPage() {
           <div className="mt-5 flex gap-2">
             <Button variant="secondary" className="h-11 flex-1" onClick={() => void copyId()}>
               {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-              {copied ? t("common.copied") : t("common.copy")}
+              {copied ? "Copied" : "Copy ID"}
             </Button>
             <Button variant="secondary" className="h-11 flex-1" onClick={() => void shareId()}>
               <Share2 className="size-4" />
-              {t("connect.shareId")}
+              Share ID
             </Button>
           </div>
         </section>
 
         <form className="panel mt-5 space-y-3 p-6" onSubmit={send}>
-          <Label htmlFor="stress-id">{t("connect.enterId")}</Label>
+          <Label htmlFor="stress-id">Enter Recipient ID</Label>
           <Input
             id="stress-id"
             value={target}
             onChange={(e) => setTarget(normalizeStressId(e.target.value))}
-            placeholder={t("connect.placeholder")}
+            placeholder="ABCD-1234-EFGH"
             className="h-12 text-center font-display text-lg tracking-[0.16em]"
             autoCapitalize="characters"
             autoComplete="off"
             spellCheck={false}
           />
           <Button type="submit" className="h-12 w-full text-base" disabled={busy}>
-            {busy ? t("common.loading") : t("connect.send")}
+            {busy ? "Sending…" : "Send Request"}
           </Button>
         </form>
       </main>

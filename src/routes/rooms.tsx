@@ -1,6 +1,5 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { useTranslation } from "react-i18next";
 
 import { Wordmark } from "@/components/brand";
 import { Button } from "@/components/ui/button";
@@ -22,7 +21,6 @@ export const Route = createFileRoute("/rooms")({
 });
 
 function RoomsPage() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { session, loading, profile, signOut } = useAuth();
 
@@ -37,18 +35,18 @@ function RoomsPage() {
           <Wordmark />
         </Link>
         <Button asChild variant="secondary" size="sm">
-          <Link to="/connect">{t("rooms.newRoom")}</Link>
+          <Link to="/connect">New Room</Link>
         </Button>
         <Button variant="ghost" size="sm" onClick={() => void signOut()}>
-          {t("settings.signOut", { defaultValue: "Sign out" })}
+          Sign out
         </Button>
       </header>
 
       <main className="mx-auto w-full max-w-md flex-1 px-5 pb-10">
-        <h1 className="text-2xl">{t("rooms.title", { defaultValue: "Rooms" })}</h1>
+        <h1 className="text-2xl">Rooms</h1>
         <div className="panel mt-5 p-5">
           <p className="text-sm text-muted-foreground">
-            {t("rooms.empty", { defaultValue: "No rooms yet. Share your Wynse ID to connect." })}
+            No rooms yet. Share your Wynse ID to connect.
           </p>
           {profile ? (
             <p className="mt-4 font-display text-lg tracking-[0.18em]">{profile.stress_id}</p>
