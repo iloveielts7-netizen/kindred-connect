@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { findByStressId, requestConnection } from "@/lib/rooms";
+import { generateStressId } from "@/lib/stress-id";
 import { isValidStressId, normalizeStressId, stressIdLink } from "@/lib/stress-id";
 
 const searchSchema = z.object({ id: z.string().optional() });
