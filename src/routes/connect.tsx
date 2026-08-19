@@ -110,13 +110,17 @@ function ConnectPage() {
 
   async function send(event: React.FormEvent) {
     event.preventDefault();
-    if (!session || !profile) return;
     const id = normalizeStressId(target);
     if (!isValidStressId(id)) {
-      toast.error("We couldn't find that Wynse ID.");
+      toast.error("Enter a full Wynse ID, like ABCD-1234-EFGH.");
       return;
     }
-    if (id === profile.stress_id) {
+    if (!session) {
+      toast.error("Sign in first to send a connection request.");
+      void navigate({ to: "/auth", search: { mode: "signup" } });
+      return;
+    }
+    if (profile && id === profile.stress_id) {
       toast.error("That's your own Wynse ID.");
       return;
     }
