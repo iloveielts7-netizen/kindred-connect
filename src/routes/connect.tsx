@@ -110,13 +110,17 @@ function ConnectPage() {
 
   async function send(event: React.FormEvent) {
     event.preventDefault();
-    if (!session || !profile) return;
     const id = normalizeStressId(target);
     if (!isValidStressId(id)) {
-      toast.error("We couldn't find that Wynse ID.");
+      toast.error("Enter a full Wynse ID, like ABCD-1234-EFGH.");
       return;
     }
-    if (id === profile.stress_id) {
+    if (!session) {
+      toast.error("Sign in first to send a connection request.");
+      void navigate({ to: "/auth", search: { mode: "signup" } });
+      return;
+    }
+    if (profile && id === profile.stress_id) {
       toast.error("That's your own Wynse ID.");
       return;
     }
@@ -132,11 +136,16 @@ function ConnectPage() {
       setTarget("");
       void navigate({ to: "/rooms" });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "";
+      console.error("connection request failed", error);
+      const message = error instanceof Error ? error.message : String(error ?? "");
       if (message.includes("duplicate") || message.includes("unique")) {
         toast.error("You already have a room or request with this person.");
+      } else if (message.toLowerCase().includes("permission")) {
+        toast.error("We couldn't reach your account right now. Try again in a moment.");
+      } else if (message.toLowerCase().includes("failed to fetch")) {
+        toast.error("You appear to be offline — the request wasn't sent.");
       } else {
-        toast.error("Something went wrong.");
+        toast.error(message || "Something went wrong sending that request.");
       }
     } finally {
       setBusy(false);
