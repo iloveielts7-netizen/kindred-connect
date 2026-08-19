@@ -115,42 +115,41 @@ function ConnectPage() {
       toast.error("Enter a full Wynse ID, like ABCD-1234-EFGH.");
       return;
     }
-    if (!session) {
-      toast.error("Sign in first to send a connection request.");
-      void navigate({ to: "/auth", search: { mode: "signup" } });
-      return;
-    }
     if (profile && id === profile.stress_id) {
       toast.error("That's your own Wynse ID.");
       return;
     }
     setBusy(true);
+
+    // Try the backend first; if anything goes wrong (permissions, offline,
+    // missing profile) fall back to a local room so the two people can still talk.
+    let displayName = id;
+    let synced = false;
     try {
       const found = await findByStressId(id);
-      if (!found) {
-        toast.error("We couldn't find that Wynse ID.");
-        return;
+      if (found) {
+        displayName = found.display_name || id;
+        if (session) {
+          await requestConnection(session.user.id, found.id);
+          synced = true;
+        }
       }
-      await requestConnection(session.user.id, found.id);
-      toast.success("Connection request sent.");
-      setTarget("");
-      void navigate({ to: "/rooms" });
     } catch (error) {
-      console.error("connection request failed", error);
-      const message = error instanceof Error ? error.message : String(error ?? "");
-      if (message.includes("duplicate") || message.includes("unique")) {
-        toast.error("You already have a room or request with this person.");
-      } else if (message.toLowerCase().includes("permission")) {
-        toast.error("We couldn't reach your account right now. Try again in a moment.");
-      } else if (message.toLowerCase().includes("failed to fetch")) {
-        toast.error("You appear to be offline — the request wasn't sent.");
-      } else {
-        toast.error(message || "Something went wrong sending that request.");
-      }
+      console.warn("connection request fell back to local room", errorMessage(error));
+    }
+
+    try {
+      upsertLocalRoom({ stressId: id, displayName, synced });
+      toast.success("Connection request sent!");
+      setTarget("");
+      void navigate({ to: "/room", search: { id } });
+    } catch (error) {
+      toast.error(errorMessage(error, "Failed to send request"));
     } finally {
       setBusy(false);
     }
   }
+
 
   return (
     <div className="flex min-h-screen flex-col room-glow">
