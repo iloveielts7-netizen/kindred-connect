@@ -95,7 +95,7 @@ function RoomPage() {
           myId,
           peerId,
           myName: profile?.display_name ?? myId,
-          peerName: getLocalRoom(peerId)?.displayName,
+          peerName: getLocalRoom(peerId)?.displayName ?? peerId,
         });
         const existing = await fetchCloudMessages(roomId);
         if (!active) return;
