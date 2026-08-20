@@ -57,6 +57,12 @@ function ConnectPage() {
     if (!loading && !session) void navigate({ to: "/auth", search: { mode: "signup" } });
   }, [loading, session, navigate]);
 
+  // Remember my Wynse ID so the room view can derive the canonical room id.
+  useEffect(() => {
+    rememberMyStressId(activeId);
+  }, [activeId]);
+
+
   useEffect(() => {
     let active = true;
     setQr(null);
