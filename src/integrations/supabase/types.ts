@@ -206,6 +206,100 @@ export type Database = {
         }
         Relationships: []
       }
+      room_members: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          room_id: string
+          stress_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          room_id: string
+          stress_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          room_id?: string
+          stress_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_members_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          room_id: string
+          sender_stress_id: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          room_id: string
+          sender_stress_id: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          room_id?: string
+          sender_stress_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rooms: {
+        Row: {
+          created_at: string
+          id: string
+          stress_id_a: string
+          stress_id_b: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          stress_id_a: string
+          stress_id_b: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          stress_id_a?: string
+          stress_id_b?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
+import { ensureCloudRoom, rememberMyStressId } from "@/lib/cloud-rooms";
 import { errorMessage, upsertLocalRoom } from "@/lib/local-rooms";
 import { findByStressId, requestConnection } from "@/lib/rooms";
 import { generateStressId } from "@/lib/stress-id";
@@ -55,6 +56,12 @@ function ConnectPage() {
   useEffect(() => {
     if (!loading && !session) void navigate({ to: "/auth", search: { mode: "signup" } });
   }, [loading, session, navigate]);
+
+  // Remember my Wynse ID so the room view can derive the canonical room id.
+  useEffect(() => {
+    rememberMyStressId(activeId);
+  }, [activeId]);
+
 
   useEffect(() => {
     let active = true;
@@ -116,27 +123,35 @@ function ConnectPage() {
       toast.error("Enter a full Wynse ID, like ABCD-1234-EFGH.");
       return;
     }
-    if (profile && id === profile.stress_id) {
+    if (id === activeId) {
       toast.error("That's your own Wynse ID.");
       return;
     }
     setBusy(true);
 
-    // Try the backend first; if anything goes wrong (permissions, offline,
-    // missing profile) fall back to a local room so the two people can still talk.
+    // Canonical cloud room first so both devices join the exact same room.
+    // If the backend fails for any reason, fall back to a local room.
     let displayName = id;
     let synced = false;
     try {
       const found = await findByStressId(id);
-      if (found) {
-        displayName = found.display_name || id;
-        if (session) {
+      if (found) displayName = found.display_name || id;
+      await ensureCloudRoom({
+        myId: activeId,
+        peerId: id,
+        myName: profile?.display_name ?? activeId,
+        peerName: displayName,
+      });
+      synced = true;
+      if (found && session) {
+        try {
           await requestConnection(session.user.id, found.id);
-          synced = true;
+        } catch (error) {
+          console.warn("connection row skipped", errorMessage(error, "request failed"));
         }
       }
     } catch (error) {
-      console.warn("connection request fell back to local room", errorMessage(error));
+      console.warn("cloud room fell back to local room", errorMessage(error));
     }
 
     try {
