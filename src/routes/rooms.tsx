@@ -1,9 +1,10 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Wordmark } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { listLocalRooms, subscribeLocalRooms, type LocalRoom } from "@/lib/local-rooms";
 
 export const Route = createFileRoute("/rooms")({
   head: () => ({
@@ -23,10 +24,20 @@ export const Route = createFileRoute("/rooms")({
 function RoomsPage() {
   const navigate = useNavigate();
   const { session, loading, profile, signOut } = useAuth();
+  const [rooms, setRooms] = useState<LocalRoom[]>([]);
 
   useEffect(() => {
     if (!loading && !session) void navigate({ to: "/auth" });
   }, [loading, session, navigate]);
+
+  const sync = useCallback(() => {
+    setRooms(listLocalRooms());
+  }, []);
+
+  useEffect(() => {
+    sync();
+    return subscribeLocalRooms(sync);
+  }, [sync]);
 
   return (
     <div className="flex min-h-screen flex-col room-glow">
@@ -44,14 +55,44 @@ function RoomsPage() {
 
       <main className="mx-auto w-full max-w-md flex-1 px-5 pb-10">
         <h1 className="text-2xl">Rooms</h1>
-        <div className="panel mt-5 p-5">
-          <p className="text-sm text-muted-foreground">
-            No rooms yet. Share your Wynse ID to connect.
-          </p>
-          {profile ? (
-            <p className="mt-4 font-display text-lg tracking-[0.18em]">{profile.stress_id}</p>
-          ) : null}
-        </div>
+
+        {rooms.length === 0 ? (
+          <div className="panel mt-5 p-5">
+            <p className="text-sm text-muted-foreground">
+              No rooms yet. Share your Wynse ID to connect.
+            </p>
+            {profile ? (
+              <p className="mt-4 font-display text-lg tracking-[0.18em]">{profile.stress_id}</p>
+            ) : null}
+          </div>
+        ) : (
+          <div className="mt-5 space-y-2">
+            {rooms.map((room) => (
+              <Link
+                key={room.stressId}
+                to="/room"
+                search={{ id: room.stressId }}
+                className="panel flex items-center justify-between p-4 transition-colors hover:bg-card/80"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-display text-base tracking-[0.14em]">
+                    {room.displayName}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">{room.stressId}</p>
+                </div>
+                <span
+                  className={`ml-3 shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                    room.synced
+                      ? "bg-primary/10 text-primary"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {room.synced ? "Synced" : "Local"}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
