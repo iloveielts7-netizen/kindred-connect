@@ -141,7 +141,7 @@ function ConnectPage() {
 
     try {
       upsertLocalRoom({ stressId: id, displayName, synced });
-      toast.success("Connection request sent!");
+      toast.success("Connected!");
       setTarget("");
       void navigate({ to: "/room", search: { id } });
     } catch (error) {
