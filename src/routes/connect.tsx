@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
+import { errorMessage, upsertLocalRoom } from "@/lib/local-rooms";
 import { findByStressId, requestConnection } from "@/lib/rooms";
 import { generateStressId } from "@/lib/stress-id";
 import { isValidStressId, normalizeStressId, stressIdLink } from "@/lib/stress-id";
