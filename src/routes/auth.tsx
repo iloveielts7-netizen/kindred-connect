@@ -115,6 +115,30 @@ function AuthPage() {
     void navigate({ to: "/rooms" });
   }
 
+  async function forgotPassword() {
+    if (!email.trim()) {
+      toast.error("Enter your email address first.");
+      return;
+    }
+    const parsed = z.string().email().safeParse(email.trim());
+    if (!parsed.success) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+    setResetting(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Password reset email sent. Check your inbox.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not send reset email.");
+    } finally {
+      setResetting(false);
+    }
+  }
+
   return (
     <div className="flex min-h-screen flex-col room-glow">
       <header className="mx-auto flex w-full max-w-md items-center justify-between px-5 py-5 safe-t">
