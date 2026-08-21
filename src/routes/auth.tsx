@@ -1,4 +1,5 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Eye, EyeOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -45,9 +46,11 @@ function AuthPage() {
   const [mode, setMode] = useState<"signin" | "signup">(search.mode ?? "signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [ageOk, setAgeOk] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   useEffect(() => {
     if (session) void navigate({ to: "/rooms" });
@@ -110,6 +113,30 @@ function AuthPage() {
     }
     if (result.redirected) return;
     void navigate({ to: "/rooms" });
+  }
+
+  async function forgotPassword() {
+    if (!email.trim()) {
+      toast.error("Enter your email address first.");
+      return;
+    }
+    const parsed = z.string().email().safeParse(email.trim());
+    if (!parsed.success) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+    setResetting(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Password reset email sent. Check your inbox.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not send reset email.");
+    } finally {
+      setResetting(false);
+    }
   }
 
   return (
