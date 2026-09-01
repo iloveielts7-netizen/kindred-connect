@@ -8,6 +8,13 @@
       "when": 1788267532078,
       "tag": "0000_create_connection_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788275625874,
+      "tag": "0001_add_read_flag_to_room_messages",
+      "breakpoints": true
     }
   ]
 }

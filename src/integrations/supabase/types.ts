@@ -270,6 +270,7 @@ export type Database = {
           body: string
           created_at: string
           id: string
+          read: boolean
           room_id: string
           sender_stress_id: string
           updated_at: string
@@ -278,6 +279,7 @@ export type Database = {
           body: string
           created_at?: string
           id?: string
+          read?: boolean
           room_id: string
           sender_stress_id: string
           updated_at?: string
@@ -286,6 +288,7 @@ export type Database = {
           body?: string
           created_at?: string
           id?: string
+          read?: boolean
           room_id?: string
           sender_stress_id?: string
           updated_at?: string
