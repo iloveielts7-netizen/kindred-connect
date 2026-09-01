@@ -10,6 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { ensureCloudRoom, rememberMyStressId } from "@/lib/cloud-rooms";
+import {
+  fetchRequest,
+  respondToConnectionRequest,
+  sendConnectionRequest,
+  subscribeOutgoingRequests,
+} from "@/lib/connection-requests";
 import { errorMessage, upsertLocalRoom } from "@/lib/local-rooms";
 import { findByStressId, requestConnection } from "@/lib/rooms";
 import { generateStressId } from "@/lib/stress-id";
@@ -47,6 +53,11 @@ function ConnectPage() {
   const [copied, setCopied] = useState(false);
   const [target, setTarget] = useState(search.id ? normalizeStressId(search.id) : "");
   const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<{
+    id: string;
+    peerId: string;
+    displayName: string;
+  } | null>(null);
 
   // Never leave the screen stuck on placeholder dots: fall back to a locally
   // generated ID until the profile arrives.
