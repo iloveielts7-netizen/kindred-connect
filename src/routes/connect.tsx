@@ -298,22 +298,36 @@ function ConnectPage() {
           </div>
         </section>
 
-        <form className="panel mt-5 space-y-3 p-6" onSubmit={send}>
-          <Label htmlFor="stress-id">Enter Recipient ID</Label>
-          <Input
-            id="stress-id"
-            value={target}
-            onChange={(e) => setTarget(normalizeStressId(e.target.value))}
-            placeholder="ABCD-1234-EFGH"
-            className="h-12 text-center font-display text-lg tracking-[0.16em]"
-            autoCapitalize="characters"
-            autoComplete="off"
-            spellCheck={false}
-          />
-          <Button type="submit" className="h-12 w-full text-base" disabled={busy}>
-            {busy ? "Sending…" : "Send Request"}
-          </Button>
-        </form>
+        {pending ? (
+          <section className="panel mt-5 space-y-3 p-6 text-center">
+            <Loader2 className="mx-auto size-5 animate-spin text-primary" />
+            <p className="text-sm font-medium text-foreground">Request sent</p>
+            <p className="font-display text-lg tracking-[0.16em] text-foreground">
+              {pending.peerId}
+            </p>
+            <p className="text-sm text-muted-foreground">Waiting for recipient to accept…</p>
+            <Button variant="secondary" className="h-11 w-full" onClick={() => void cancelPending()}>
+              Cancel request
+            </Button>
+          </section>
+        ) : (
+          <form className="panel mt-5 space-y-3 p-6" onSubmit={send}>
+            <Label htmlFor="stress-id">Enter Recipient ID</Label>
+            <Input
+              id="stress-id"
+              value={target}
+              onChange={(e) => setTarget(normalizeStressId(e.target.value))}
+              placeholder="ABCD-1234-EFGH"
+              className="h-12 text-center font-display text-lg tracking-[0.16em]"
+              autoCapitalize="characters"
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <Button type="submit" className="h-12 w-full text-base" disabled={busy}>
+              {busy ? "Sending…" : "Send Request"}
+            </Button>
+          </form>
+        )}
       </main>
     </div>
   );
