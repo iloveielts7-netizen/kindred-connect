@@ -4,7 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import { Wordmark } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { listLocalRooms, subscribeLocalRooms, type LocalRoom } from "@/lib/local-rooms";
+import {
+  fetchRoomActivity,
+  recallMyStressId,
+  subscribeRoomActivity,
+  type RoomActivity,
+} from "@/lib/cloud-rooms";
+import { formatTime } from "@/lib/format";
+import { errorMessage, listLocalRooms, subscribeLocalRooms, type LocalRoom } from "@/lib/local-rooms";
 
 export const Route = createFileRoute("/rooms")({
   head: () => ({
@@ -25,6 +32,9 @@ function RoomsPage() {
   const navigate = useNavigate();
   const { session, loading, profile, signOut } = useAuth();
   const [rooms, setRooms] = useState<LocalRoom[]>([]);
+  const [activity, setActivity] = useState<Record<string, RoomActivity>>({});
+
+  const myId = profile?.stress_id ?? recallMyStressId() ?? "";
 
   useEffect(() => {
     if (!loading && !session) void navigate({ to: "/auth" });
@@ -38,6 +48,27 @@ function RoomsPage() {
     sync();
     return subscribeLocalRooms(sync);
   }, [sync]);
+
+  const refreshActivity = useCallback(() => {
+    if (!myId || rooms.length === 0) return;
+    void (async () => {
+      try {
+        setActivity(await fetchRoomActivity(myId, rooms.map((room) => room.stressId)));
+      } catch (error) {
+        console.warn("unread counts unavailable", errorMessage(error, "load failed"));
+      }
+    })();
+  }, [myId, rooms]);
+
+  useEffect(() => {
+    refreshActivity();
+  }, [refreshActivity]);
+
+  useEffect(() => {
+    if (!myId) return;
+    return subscribeRoomActivity(myId, refreshActivity);
+  }, [myId, refreshActivity]);
+
 
   return (
     <div className="flex min-h-screen flex-col room-glow">
