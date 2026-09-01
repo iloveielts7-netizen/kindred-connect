@@ -129,20 +129,10 @@ function ConnectPage() {
     }
     setBusy(true);
 
-    // Canonical cloud room first so both devices join the exact same room.
-    // If the backend fails for any reason, fall back to a local room.
     let displayName = id;
-    let synced = false;
     try {
       const found = await findByStressId(id);
       if (found) displayName = found.display_name || id;
-      await ensureCloudRoom({
-        myId: activeId,
-        peerId: id,
-        myName: profile?.display_name ?? activeId,
-        peerName: displayName,
-      });
-      synced = true;
       if (found && session) {
         try {
           await requestConnection(session.user.id, found.id);
@@ -151,19 +141,34 @@ function ConnectPage() {
         }
       }
     } catch (error) {
-      console.warn("cloud room fell back to local room", errorMessage(error));
+      console.warn("profile lookup skipped", errorMessage(error));
     }
 
     try {
-      upsertLocalRoom({ stressId: id, displayName, synced });
+      const request = await sendConnectionRequest(activeId, id);
+      setPending({ id: request.id, peerId: id, displayName });
+      setTarget("");
+      toast.success("Request sent — waiting for them to accept.");
+    } catch (error) {
+      // Backend unavailable: fall back to a local room so the pair can still talk.
+      console.warn("connection request fell back to local room", errorMessage(error));
+      upsertLocalRoom({ stressId: id, displayName, synced: false });
       toast.success("Connected!");
       setTarget("");
       void navigate({ to: "/room", search: { id } });
-    } catch (error) {
-      toast.error(errorMessage(error, "Failed to send request"));
     } finally {
       setBusy(false);
     }
+  }
+
+  async function cancelPending() {
+    if (!pending) return;
+    try {
+      await respondToConnectionRequest(pending.id, false);
+    } catch {
+      /* best effort */
+    }
+    setPending(null);
   }
 
 
