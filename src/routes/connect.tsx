@@ -97,6 +97,64 @@ function ConnectPage() {
     };
   }, [activeId]);
 
+  // Watch the request I sent: the moment they accept, both devices land in the
+  // same canonical room.
+  useEffect(() => {
+    if (!pending) return;
+    let active = true;
+
+    async function enter() {
+      if (!active || !pending) return;
+      active = false;
+      try {
+        await ensureCloudRoom({
+          myId: activeId,
+          peerId: pending.peerId,
+          myName: profile?.display_name ?? activeId,
+          peerName: pending.displayName,
+        });
+      } catch (error) {
+        console.warn("cloud room fallback", errorMessage(error));
+      }
+      upsertLocalRoom({ stressId: pending.peerId, displayName: pending.displayName, synced: true });
+      const peerId = pending.peerId;
+      setPending(null);
+      toast.success("Request accepted — opening your room.");
+      void navigate({ to: "/room", search: { id: peerId } });
+    }
+
+    const unsubscribe = subscribeOutgoingRequests(activeId, (request) => {
+      if (request.id !== pending.id) return;
+      if (request.status === "accepted") void enter();
+      if (request.status === "rejected") {
+        setPending(null);
+        toast.error("Your request was declined.");
+      }
+    });
+
+    // Safety net in case the realtime socket drops.
+    const poll = window.setInterval(() => {
+      void (async () => {
+        try {
+          const row = await fetchRequest(pending.id);
+          if (row?.status === "accepted") void enter();
+          if (row?.status === "rejected") {
+            setPending(null);
+            toast.error("Your request was declined.");
+          }
+        } catch {
+          /* ignore */
+        }
+      })();
+    }, 4000);
+
+    return () => {
+      active = false;
+      unsubscribe();
+      window.clearInterval(poll);
+    };
+  }, [pending, activeId, profile?.display_name, navigate]);
+
   async function copyId() {
     try {
       await navigator.clipboard.writeText(activeId);
