@@ -118,3 +118,67 @@ export function subscribeCloudMessages(
     void supabase.removeChannel(channel);
   };
 }
+
+export type RoomActivity = {
+  /** Peer Wynse ID this activity belongs to. */
+  peerId: string;
+  unread: number;
+  lastAt: string | null;
+};
+
+/** Unread counts + last activity for each peer, keyed by peer Wynse ID. */
+export async function fetchRoomActivity(
+  myId: string,
+  peerIds: string[],
+): Promise<Record<string, RoomActivity>> {
+  const result: Record<string, RoomActivity> = {};
+  if (!myId || peerIds.length === 0) return result;
+
+  const roomMap = new Map<string, string>();
+  for (const peerId of peerIds) {
+    roomMap.set(roomIdFor(myId, peerId), peerId);
+    result[peerId] = { peerId, unread: 0, lastAt: null };
+  }
+
+  const { data, error } = await supabase
+    .from("room_messages")
+    .select("room_id, sender_stress_id, read, created_at")
+    .in("room_id", [...roomMap.keys()])
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+
+  for (const row of data ?? []) {
+    const peerId = roomMap.get(row.room_id);
+    if (!peerId) continue;
+    const entry = result[peerId]!;
+    entry.lastAt = row.created_at;
+    if (row.sender_stress_id !== myId && !row.read) entry.unread += 1;
+  }
+  return result;
+}
+
+/** Marks every incoming message in a room as read. */
+export async function markRoomRead(roomId: string, myId: string): Promise<void> {
+  if (!roomId || !myId) return;
+  const { error } = await supabase
+    .from("room_messages")
+    .update({ read: true })
+    .eq("room_id", roomId)
+    .eq("read", false)
+    .neq("sender_stress_id", myId);
+  if (error) throw error;
+}
+
+/** Realtime: any message change in any of my rooms. */
+export function subscribeRoomActivity(myId: string, onChange: () => void): () => void {
+  const channel = supabase
+    .channel(`room-activity-${myId}`)
+    .on("postgres_changes", { event: "*", schema: "public", table: "room_messages" }, () => {
+      onChange();
+    })
+    .subscribe();
+
+  return () => {
+    void supabase.removeChannel(channel);
+  };
+}
