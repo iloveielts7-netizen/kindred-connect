@@ -10,6 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { ensureCloudRoom, rememberMyStressId } from "@/lib/cloud-rooms";
+import {
+  fetchRequest,
+  respondToConnectionRequest,
+  sendConnectionRequest,
+  subscribeOutgoingRequests,
+} from "@/lib/connection-requests";
 import { errorMessage, upsertLocalRoom } from "@/lib/local-rooms";
 import { findByStressId, requestConnection } from "@/lib/rooms";
 import { generateStressId } from "@/lib/stress-id";
@@ -47,6 +53,11 @@ function ConnectPage() {
   const [copied, setCopied] = useState(false);
   const [target, setTarget] = useState(search.id ? normalizeStressId(search.id) : "");
   const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<{
+    id: string;
+    peerId: string;
+    displayName: string;
+  } | null>(null);
 
   // Never leave the screen stuck on placeholder dots: fall back to a locally
   // generated ID until the profile arrives.
@@ -85,6 +96,64 @@ function ConnectPage() {
       active = false;
     };
   }, [activeId]);
+
+  // Watch the request I sent: the moment they accept, both devices land in the
+  // same canonical room.
+  useEffect(() => {
+    if (!pending) return;
+    let active = true;
+
+    async function enter() {
+      if (!active || !pending) return;
+      active = false;
+      try {
+        await ensureCloudRoom({
+          myId: activeId,
+          peerId: pending.peerId,
+          myName: profile?.display_name ?? activeId,
+          peerName: pending.displayName,
+        });
+      } catch (error) {
+        console.warn("cloud room fallback", errorMessage(error));
+      }
+      upsertLocalRoom({ stressId: pending.peerId, displayName: pending.displayName, synced: true });
+      const peerId = pending.peerId;
+      setPending(null);
+      toast.success("Request accepted — opening your room.");
+      void navigate({ to: "/room", search: { id: peerId } });
+    }
+
+    const unsubscribe = subscribeOutgoingRequests(activeId, (request) => {
+      if (request.id !== pending.id) return;
+      if (request.status === "accepted") void enter();
+      if (request.status === "rejected") {
+        setPending(null);
+        toast.error("Your request was declined.");
+      }
+    });
+
+    // Safety net in case the realtime socket drops.
+    const poll = window.setInterval(() => {
+      void (async () => {
+        try {
+          const row = await fetchRequest(pending.id);
+          if (row?.status === "accepted") void enter();
+          if (row?.status === "rejected") {
+            setPending(null);
+            toast.error("Your request was declined.");
+          }
+        } catch {
+          /* ignore */
+        }
+      })();
+    }, 4000);
+
+    return () => {
+      active = false;
+      unsubscribe();
+      window.clearInterval(poll);
+    };
+  }, [pending, activeId, profile?.display_name, navigate]);
 
   async function copyId() {
     try {
@@ -129,20 +198,10 @@ function ConnectPage() {
     }
     setBusy(true);
 
-    // Canonical cloud room first so both devices join the exact same room.
-    // If the backend fails for any reason, fall back to a local room.
     let displayName = id;
-    let synced = false;
     try {
       const found = await findByStressId(id);
       if (found) displayName = found.display_name || id;
-      await ensureCloudRoom({
-        myId: activeId,
-        peerId: id,
-        myName: profile?.display_name ?? activeId,
-        peerName: displayName,
-      });
-      synced = true;
       if (found && session) {
         try {
           await requestConnection(session.user.id, found.id);
@@ -151,19 +210,34 @@ function ConnectPage() {
         }
       }
     } catch (error) {
-      console.warn("cloud room fell back to local room", errorMessage(error));
+      console.warn("profile lookup skipped", errorMessage(error));
     }
 
     try {
-      upsertLocalRoom({ stressId: id, displayName, synced });
+      const request = await sendConnectionRequest(activeId, id);
+      setPending({ id: request.id, peerId: id, displayName });
+      setTarget("");
+      toast.success("Request sent — waiting for them to accept.");
+    } catch (error) {
+      // Backend unavailable: fall back to a local room so the pair can still talk.
+      console.warn("connection request fell back to local room", errorMessage(error));
+      upsertLocalRoom({ stressId: id, displayName, synced: false });
       toast.success("Connected!");
       setTarget("");
       void navigate({ to: "/room", search: { id } });
-    } catch (error) {
-      toast.error(errorMessage(error, "Failed to send request"));
     } finally {
       setBusy(false);
     }
+  }
+
+  async function cancelPending() {
+    if (!pending) return;
+    try {
+      await respondToConnectionRequest(pending.id, false);
+    } catch {
+      /* best effort */
+    }
+    setPending(null);
   }
 
 
@@ -224,22 +298,36 @@ function ConnectPage() {
           </div>
         </section>
 
-        <form className="panel mt-5 space-y-3 p-6" onSubmit={send}>
-          <Label htmlFor="stress-id">Enter Recipient ID</Label>
-          <Input
-            id="stress-id"
-            value={target}
-            onChange={(e) => setTarget(normalizeStressId(e.target.value))}
-            placeholder="ABCD-1234-EFGH"
-            className="h-12 text-center font-display text-lg tracking-[0.16em]"
-            autoCapitalize="characters"
-            autoComplete="off"
-            spellCheck={false}
-          />
-          <Button type="submit" className="h-12 w-full text-base" disabled={busy}>
-            {busy ? "Sending…" : "Send Request"}
-          </Button>
-        </form>
+        {pending ? (
+          <section className="panel mt-5 space-y-3 p-6 text-center">
+            <Loader2 className="mx-auto size-5 animate-spin text-primary" />
+            <p className="text-sm font-medium text-foreground">Request sent</p>
+            <p className="font-display text-lg tracking-[0.16em] text-foreground">
+              {pending.peerId}
+            </p>
+            <p className="text-sm text-muted-foreground">Waiting for recipient to accept…</p>
+            <Button variant="secondary" className="h-11 w-full" onClick={() => void cancelPending()}>
+              Cancel request
+            </Button>
+          </section>
+        ) : (
+          <form className="panel mt-5 space-y-3 p-6" onSubmit={send}>
+            <Label htmlFor="stress-id">Enter Recipient ID</Label>
+            <Input
+              id="stress-id"
+              value={target}
+              onChange={(e) => setTarget(normalizeStressId(e.target.value))}
+              placeholder="ABCD-1234-EFGH"
+              className="h-12 text-center font-display text-lg tracking-[0.16em]"
+              autoCapitalize="characters"
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <Button type="submit" className="h-12 w-full text-base" disabled={busy}>
+              {busy ? "Sending…" : "Send Request"}
+            </Button>
+          </form>
+        )}
       </main>
     </div>
   );
