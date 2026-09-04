@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   ensureCloudRoom,
   fetchCloudMessages,
+  markRoomRead,
   recallMyStressId,
   roomIdFor,
   sendCloudMessage,
@@ -25,7 +26,9 @@ import {
   upsertLocalRoom,
   type LocalMessage,
 } from "@/lib/local-rooms";
+import { formatTime } from "@/lib/format";
 import { normalizeStressId } from "@/lib/stress-id";
+import { WynseStatusIcon, type WynseMessageStatus } from "@/components/WynseStatusIcon";
 
 const searchSchema = z.object({ id: z.string().catch("") });
 
@@ -106,6 +109,7 @@ function RoomPage() {
         if (!active) return;
         setCloudMessages(existing);
         upsertLocalRoom({ stressId: peerId, synced: true });
+        void markRoomRead(roomId, myId).catch(() => undefined);
 
         unsubscribe = subscribeCloudMessages(roomId, (message) => {
           setCloudMessages((current) => {
@@ -113,6 +117,9 @@ function RoomPage() {
             if (list.some((m) => m.id === message.id)) return list;
             return [...list, message];
           });
+          if (message.sender_stress_id !== myId) {
+            void markRoomRead(roomId, myId).catch(() => undefined);
+          }
         });
       } catch (error) {
         console.warn("cloud room unavailable, staying local", errorMessage(error, "sync failed"));
@@ -132,12 +139,16 @@ function RoomPage() {
         id: message.id,
         body: message.body,
         mine: message.sender_stress_id === myId,
+        status: (message.read ? "read" : "delivered") as WynseMessageStatus,
+        createdAt: message.created_at,
       }));
     }
     return localMessages.map((message) => ({
       id: message.id,
       body: message.body,
       mine: message.mine,
+      status: "sent" as WynseMessageStatus,
+      createdAt: message.createdAt,
     }));
   }, [cloudMessages, localMessages, myId]);
 
@@ -194,7 +205,7 @@ function RoomPage() {
           aria-label="Start audio call"
           onClick={() => callApiRef.current?.startAudio()}
         >
-          <Phone className="size-5 text-primary" />
+          <Phone className="size-5 text-[#00f2ff]" />
         </Button>
       </header>
 
@@ -219,7 +230,15 @@ function RoomPage() {
                     : "mr-auto max-w-[80%] rounded-2xl bg-card px-4 py-2.5 text-sm text-foreground"
                 }
               >
-                {message.body}
+                <p>{message.body}</p>
+                <div
+                  className={`mt-1 flex items-center justify-end gap-1 text-[10px] opacity-80 ${
+                    message.mine ? "text-primary-foreground/80" : "text-muted-foreground"
+                  }`}
+                >
+                  <span>{formatTime(message.createdAt)}</span>
+                  {message.mine ? <WynseStatusIcon status={message.status} /> : null}
+                </div>
               </div>
             ))
           )}
