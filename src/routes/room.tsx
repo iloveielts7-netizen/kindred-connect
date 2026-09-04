@@ -1,8 +1,9 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Phone, Send } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 
+import { CallModal, type CallApi } from "@/components/CallModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -59,6 +60,10 @@ function RoomPage() {
   const [cloudMessages, setCloudMessages] = useState<CloudMessage[] | null>(null);
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement | null>(null);
+  const callApiRef = useRef<CallApi | null>(null);
+  const handleCallApi = useCallback((api: CallApi | null) => {
+    callApiRef.current = api;
+  }, []);
 
   const synced = cloudMessages !== null;
 
@@ -183,7 +188,19 @@ function RoomPage() {
         >
           {synced ? "Synced" : "Local"}
         </span>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Start audio call"
+          onClick={() => callApiRef.current?.startAudio()}
+        >
+          <Phone className="size-5 text-primary" />
+        </Button>
       </header>
+
+      {roomId && myId ? (
+        <CallModal roomId={roomId} meId={myId} peerLabel={peerId} onApi={handleCallApi} />
+      ) : null}
 
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5">
         <div className="flex-1 space-y-3 py-4">
