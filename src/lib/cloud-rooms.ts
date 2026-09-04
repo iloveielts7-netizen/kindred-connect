@@ -68,7 +68,7 @@ export async function ensureCloudRoom(input: {
 export async function fetchCloudMessages(roomId: string): Promise<CloudMessage[]> {
   const { data, error } = await supabase
     .from("room_messages")
-    .select("id, room_id, sender_stress_id, body, created_at")
+    .select("id, room_id, sender_stress_id, body, created_at, read")
     .eq("room_id", roomId)
     .order("created_at", { ascending: true });
   if (error) throw error;
@@ -87,7 +87,7 @@ export async function sendCloudMessage(input: {
       sender_stress_id: input.senderStressId,
       body: input.body,
     })
-    .select("id, room_id, sender_stress_id, body, created_at")
+    .select("id, room_id, sender_stress_id, body, created_at, read")
     .single();
   if (error) throw error;
   return data as CloudMessage;
