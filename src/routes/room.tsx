@@ -60,6 +60,10 @@ function RoomPage() {
   const [cloudMessages, setCloudMessages] = useState<CloudMessage[] | null>(null);
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement | null>(null);
+  const callApiRef = useRef<CallApi | null>(null);
+  const handleCallApi = useCallback((api: CallApi | null) => {
+    callApiRef.current = api;
+  }, []);
 
   const synced = cloudMessages !== null;
 
