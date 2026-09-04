@@ -205,7 +205,7 @@ function RoomPage() {
           aria-label="Start audio call"
           onClick={() => callApiRef.current?.startAudio()}
         >
-          <Phone className="size-5 text-primary" />
+          <Phone className="size-5 text-[#00f2ff]" />
         </Button>
       </header>
 
@@ -230,7 +230,15 @@ function RoomPage() {
                     : "mr-auto max-w-[80%] rounded-2xl bg-card px-4 py-2.5 text-sm text-foreground"
                 }
               >
-                {message.body}
+                <p>{message.body}</p>
+                <div
+                  className={`mt-1 flex items-center justify-end gap-1 text-[10px] opacity-80 ${
+                    message.mine ? "text-primary-foreground/80" : "text-muted-foreground"
+                  }`}
+                >
+                  <span>{formatTime(message.createdAt)}</span>
+                  {message.mine ? <WynseStatusIcon status={message.status} /> : null}
+                </div>
               </div>
             ))
           )}
