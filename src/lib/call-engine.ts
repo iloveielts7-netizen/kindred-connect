@@ -96,7 +96,7 @@ export class CallEngine {
   /** Joins the room's signalling channel; required to receive calls. */
   async listen() {
     if (this.channel) return;
-    const channel = supabase.channel(`stress-call:${this.roomId}`, {
+    const channel = supabase.channel(`call-signal-${this.roomId}`, {
       config: { broadcast: { self: false, ack: true } },
     });
     channel.on("broadcast", { event: "signal" }, ({ payload }) => {
