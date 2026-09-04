@@ -109,6 +109,7 @@ function RoomPage() {
         if (!active) return;
         setCloudMessages(existing);
         upsertLocalRoom({ stressId: peerId, synced: true });
+        void markRoomRead(roomId, myId).catch(() => undefined);
 
         unsubscribe = subscribeCloudMessages(roomId, (message) => {
           setCloudMessages((current) => {
@@ -116,6 +117,9 @@ function RoomPage() {
             if (list.some((m) => m.id === message.id)) return list;
             return [...list, message];
           });
+          if (message.sender_stress_id !== myId) {
+            void markRoomRead(roomId, myId).catch(() => undefined);
+          }
         });
       } catch (error) {
         console.warn("cloud room unavailable, staying local", errorMessage(error, "sync failed"));
@@ -135,12 +139,16 @@ function RoomPage() {
         id: message.id,
         body: message.body,
         mine: message.sender_stress_id === myId,
+        status: (message.read ? "read" : "delivered") as WynseMessageStatus,
+        createdAt: message.created_at,
       }));
     }
     return localMessages.map((message) => ({
       id: message.id,
       body: message.body,
       mine: message.mine,
+      status: "sent" as WynseMessageStatus,
+      createdAt: message.createdAt,
     }));
   }, [cloudMessages, localMessages, myId]);
 
