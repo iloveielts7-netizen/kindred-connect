@@ -188,7 +188,19 @@ function RoomPage() {
         >
           {synced ? "Synced" : "Local"}
         </span>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Start audio call"
+          onClick={() => callApiRef.current?.startAudio()}
+        >
+          <Phone className="size-5 text-primary" />
+        </Button>
       </header>
+
+      {roomId && myId ? (
+        <CallModal roomId={roomId} meId={myId} peerLabel={peerId} onApi={handleCallApi} />
+      ) : null}
 
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5">
         <div className="flex-1 space-y-3 py-4">
