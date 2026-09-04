@@ -11,6 +11,7 @@ export type CloudMessage = {
   sender_stress_id: string;
   body: string;
   created_at: string;
+  read: boolean;
 };
 
 const MY_ID_KEY = "wynse.my.id";
