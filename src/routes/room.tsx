@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   ensureCloudRoom,
   fetchCloudMessages,
+  markRoomRead,
   recallMyStressId,
   roomIdFor,
   sendCloudMessage,
@@ -25,7 +26,9 @@ import {
   upsertLocalRoom,
   type LocalMessage,
 } from "@/lib/local-rooms";
+import { formatTime } from "@/lib/format";
 import { normalizeStressId } from "@/lib/stress-id";
+import { WynseStatusIcon, type WynseMessageStatus } from "@/components/WynseStatusIcon";
 
 const searchSchema = z.object({ id: z.string().catch("") });
 
