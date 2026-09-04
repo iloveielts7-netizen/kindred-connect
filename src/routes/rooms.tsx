@@ -98,30 +98,53 @@ function RoomsPage() {
           </div>
         ) : (
           <div className="mt-5 space-y-2">
-            {rooms.map((room) => (
-              <Link
-                key={room.stressId}
-                to="/room"
-                search={{ id: room.stressId }}
-                className="panel flex items-center justify-between p-4 transition-colors hover:bg-card/80"
-              >
-                <div className="min-w-0">
-                  <p className="truncate font-display text-base tracking-[0.14em]">
-                    {room.displayName}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">{room.stressId}</p>
-                </div>
-                <span
-                  className={`ml-3 shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                    room.synced
-                      ? "bg-primary/10 text-primary"
-                      : "bg-muted text-muted-foreground"
-                  }`}
+            {rooms.map((room) => {
+              const unread = activity[room.stressId]?.unread ?? 0;
+              const lastAt = activity[room.stressId]?.lastAt ?? room.createdAt;
+              return (
+                <Link
+                  key={room.stressId}
+                  to="/room"
+                  search={{ id: room.stressId }}
+                  className="panel flex items-center justify-between p-4 transition-colors hover:bg-card/80"
                 >
-                  {room.synced ? "Synced" : "Local"}
-                </span>
-              </Link>
-            ))}
+                  <div className="min-w-0">
+                    <p className="truncate font-display text-base tracking-[0.14em]">
+                      {room.displayName}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">{room.stressId}</p>
+                  </div>
+                  <div className="ml-3 flex shrink-0 flex-col items-end gap-1.5">
+                    <span
+                      className={`text-[11px] ${
+                        unread > 0 ? "font-semibold text-[#00f2ff]" : "text-muted-foreground"
+                      }`}
+                    >
+                      {lastAt ? formatTime(lastAt) : ""}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {unread > 0 ? (
+                        <span
+                          className="flex h-5 w-5 items-center justify-center rounded-full bg-[#00f2ff] text-[10px] font-bold text-[#090e13] shadow-[0_0_8px_rgba(0,242,255,0.45)]"
+                          aria-label={`${unread} unread`}
+                        >
+                          {unread > 9 ? "9+" : unread}
+                        </span>
+                      ) : null}
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                          room.synced
+                            ? "bg-primary/10 text-primary"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {room.synced ? "Synced" : "Local"}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </main>
