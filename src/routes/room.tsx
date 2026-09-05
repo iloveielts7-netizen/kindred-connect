@@ -63,6 +63,7 @@ function RoomPage() {
   const [localMessages, setLocalMessages] = useState<LocalMessage[]>([]);
   const [cloudMessages, setCloudMessages] = useState<CloudMessage[] | null>(null);
   const [draft, setDraft] = useState("");
+  const [isCallModalOpen, setIsCallModalOpen] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
   const callApiRef = useRef<CallApi | null>(null);
   const handleCallApi = useCallback((api: CallApi | null) => {
