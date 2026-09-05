@@ -21,9 +21,10 @@ function formatDuration(seconds: number) {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-export function CallModal({ roomId, meId, peerLabel, onApi }: Props) {
+export function CallModal({ roomId, meId, peerLabel, onApi, onClose }: Props) {
   const engineRef = useRef<CallEngine | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const wasActiveRef = useRef(false);
   const [state, setState] = useState<CallState>("idle");
   const [quality, setQuality] = useState<CallQuality>("good");
   const [muted, setMuted] = useState(false);
