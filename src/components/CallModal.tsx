@@ -12,6 +12,7 @@ type Props = {
   meId: string;
   peerLabel: string;
   onApi?: (api: CallApi | null) => void;
+  onClose?: () => void;
 };
 
 function formatDuration(seconds: number) {
@@ -20,9 +21,10 @@ function formatDuration(seconds: number) {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-export function CallModal({ roomId, meId, peerLabel, onApi }: Props) {
+export function CallModal({ roomId, meId, peerLabel, onApi, onClose }: Props) {
   const engineRef = useRef<CallEngine | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const wasActiveRef = useRef(false);
   const [state, setState] = useState<CallState>("idle");
   const [quality, setQuality] = useState<CallQuality>("good");
   const [muted, setMuted] = useState(false);
@@ -79,6 +81,15 @@ export function CallModal({ roomId, meId, peerLabel, onApi }: Props) {
     const timer = window.setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => window.clearInterval(timer);
   }, [state]);
+
+  useEffect(() => {
+    if (state !== "idle") {
+      wasActiveRef.current = true;
+    } else if (wasActiveRef.current) {
+      wasActiveRef.current = false;
+      onClose?.();
+    }
+  }, [state, onClose]);
 
   const visible = state !== "idle";
 
