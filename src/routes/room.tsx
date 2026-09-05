@@ -98,7 +98,7 @@ function RoomPage() {
     return subscribeLocalRooms(syncLocal);
   }, [syncLocal]);
 
-  const handleStartCall = useCallback(async () => {
+  const startCall = useCallback(async () => {
     if (!roomId || !myId) return;
     const channel = supabase.channel(`call-signal-${roomId}`, {
       config: { broadcast: { self: false } },
