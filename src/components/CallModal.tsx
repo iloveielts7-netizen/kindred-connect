@@ -82,6 +82,15 @@ export function CallModal({ roomId, meId, peerLabel, onApi, onClose }: Props) {
     return () => window.clearInterval(timer);
   }, [state]);
 
+  useEffect(() => {
+    if (state !== "idle") {
+      wasActiveRef.current = true;
+    } else if (wasActiveRef.current) {
+      wasActiveRef.current = false;
+      onClose?.();
+    }
+  }, [state, onClose]);
+
   const visible = state !== "idle";
 
   function accept() {
