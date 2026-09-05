@@ -29,6 +29,7 @@ import {
 import { formatTime } from "@/lib/format";
 import { normalizeStressId } from "@/lib/stress-id";
 import { WynseStatusIcon, type WynseMessageStatus } from "@/components/WynseStatusIcon";
+import { supabase } from "@/integrations/supabase/client";
 
 const searchSchema = z.object({ id: z.string().catch("") });
 
