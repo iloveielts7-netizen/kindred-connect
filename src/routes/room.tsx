@@ -235,6 +235,13 @@ function RoomPage() {
           <p className="truncate font-display text-base tracking-[0.14em]">{peerId}</p>
           <p className="text-xs text-muted-foreground">Private room · Safe Exchange</p>
         </div>
+        <button
+          onClick={handleStartCall}
+          className="p-2 rounded-full bg-[#121a22] border border-[#1e2d3d] text-[#00f2ff] hover:bg-[#1e2d3d] flex items-center justify-center mr-2"
+          aria-label="Start audio call"
+        >
+          <Phone className="w-5 h-5" />
+        </button>
         <span
           className={
             synced
@@ -244,18 +251,16 @@ function RoomPage() {
         >
           {synced ? "Synced" : "Local"}
         </span>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Start audio call"
-          onClick={() => callApiRef.current?.startAudio()}
-        >
-          <Phone className="size-5 text-[#00f2ff]" />
-        </Button>
       </header>
 
-      {roomId && myId ? (
-        <CallModal roomId={roomId} meId={myId} peerLabel={peerId} onApi={handleCallApi} />
+      {isCallModalOpen && roomId && myId ? (
+        <CallModal
+          roomId={roomId}
+          meId={myId}
+          peerLabel={peerId}
+          onApi={handleCallApi}
+          onClose={() => setIsCallModalOpen(false)}
+        />
       ) : null}
 
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5">
