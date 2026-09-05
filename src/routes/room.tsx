@@ -98,6 +98,44 @@ function RoomPage() {
     return subscribeLocalRooms(syncLocal);
   }, [syncLocal]);
 
+  const handleStartCall = useCallback(async () => {
+    if (!roomId || !myId) return;
+    const channel = supabase.channel(`call-signal-${roomId}`, {
+      config: { broadcast: { self: false } },
+    });
+    await new Promise<void>((resolve) => {
+      channel.subscribe((status) => {
+        if (status === "SUBSCRIBED") resolve();
+      });
+    });
+    await channel.send({
+      type: "broadcast",
+      event: "signal",
+      payload: { type: "invite", mode: "audio", from: myId },
+    });
+    void supabase.removeChannel(channel);
+    pendingCallStartRef.current = true;
+    setIsCallModalOpen(true);
+  }, [roomId, myId]);
+
+  useEffect(() => {
+    if (!roomId || !myId) return;
+    const channel = supabase.channel(`call-signal-${roomId}`, {
+      config: { broadcast: { self: false } },
+    });
+    channel.on("broadcast", { event: "signal" }, ({ payload }) => {
+      const p = payload as { type?: string; from?: string };
+      if (p.type === "invite" && p.from && p.from !== myId) {
+        setIsCallModalOpen(true);
+      }
+    });
+    void channel.subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [roomId, myId]);
+
+
   // Cloud room + realtime subscription.
   useEffect(() => {
     if (!roomId || !myId || !peerId) return;
