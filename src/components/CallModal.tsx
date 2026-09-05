@@ -12,6 +12,7 @@ type Props = {
   meId: string;
   peerLabel: string;
   onApi?: (api: CallApi | null) => void;
+  onClose?: () => void;
 };
 
 function formatDuration(seconds: number) {
