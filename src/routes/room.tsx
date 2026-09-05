@@ -301,6 +301,16 @@ function RoomPage() {
           </Button>
         </form>
       </main>
+
+      {isCallModalOpen && roomId && myId ? (
+        <CallModal
+          roomId={roomId}
+          meId={myId}
+          peerLabel={peerId}
+          onApi={handleCallApi}
+          onClose={() => setIsCallModalOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }
