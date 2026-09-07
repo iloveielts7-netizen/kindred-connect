@@ -284,10 +284,10 @@ function RoomPage() {
 
       {isCallModalOpen && roomId && myId ? (
         <CallModal
+          isOpen={isCallModalOpen}
           roomId={roomId}
-          meId={myId}
-          peerLabel={peerId}
-          onApi={handleCallApi}
+          currentUserId={myId}
+          initialState={callDirection}
           onClose={() => setIsCallModalOpen(false)}
         />
       ) : null}
