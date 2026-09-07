@@ -3,7 +3,7 @@ import { ArrowLeft, Phone, Send } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 
-import { CallModal, type CallApi } from "@/components/CallModal";
+import { CallModal } from "@/components/CallModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
