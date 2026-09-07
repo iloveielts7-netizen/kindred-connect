@@ -90,34 +90,22 @@ function RoomPage() {
     return subscribeLocalRooms(syncLocal);
   }, [syncLocal]);
 
-  const startCall = useCallback(async () => {
+  const startCall = useCallback(() => {
     if (!roomId || !myId) return;
-    const channel = supabase.channel(`call-signal-${roomId}`, {
-      config: { broadcast: { self: false } },
-    });
-    await new Promise<void>((resolve) => {
-      channel.subscribe((status) => {
-        if (status === "SUBSCRIBED") resolve();
-      });
-    });
-    await channel.send({
-      type: "broadcast",
-      event: "signal",
-      payload: { type: "invite", mode: "audio", from: myId },
-    });
-    void supabase.removeChannel(channel);
-    pendingCallStartRef.current = true;
+    setCallDirection("ringing");
     setIsCallModalOpen(true);
   }, [roomId, myId]);
 
+  // Listen for an incoming call invite while the call screen is closed.
   useEffect(() => {
-    if (!roomId || !myId) return;
-    const channel = supabase.channel(`call-signal-${roomId}`, {
+    if (!roomId || !myId || isCallModalOpen) return;
+    const channel = supabase.channel(`call-signal-${roomId}-watch`, {
       config: { broadcast: { self: false } },
     });
-    channel.on("broadcast", { event: "signal" }, ({ payload }) => {
-      const p = payload as { type?: string; from?: string };
-      if (p.type === "invite" && p.from && p.from !== myId) {
+    channel.on("broadcast", { event: "call-invite" }, ({ payload }) => {
+      const p = payload as { sender?: string };
+      if (p.sender && p.sender !== myId) {
+        setCallDirection("incoming");
         setIsCallModalOpen(true);
       }
     });
@@ -125,7 +113,7 @@ function RoomPage() {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [roomId, myId]);
+  }, [roomId, myId, isCallModalOpen]);
 
 
   // Cloud room + realtime subscription.
