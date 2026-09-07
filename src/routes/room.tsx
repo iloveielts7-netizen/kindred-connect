@@ -64,16 +64,8 @@ function RoomPage() {
   const [cloudMessages, setCloudMessages] = useState<CloudMessage[] | null>(null);
   const [draft, setDraft] = useState("");
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+  const [callDirection, setCallDirection] = useState<"ringing" | "incoming">("ringing");
   const endRef = useRef<HTMLDivElement | null>(null);
-  const callApiRef = useRef<CallApi | null>(null);
-  const pendingCallStartRef = useRef(false);
-  const handleCallApi = useCallback((api: CallApi | null) => {
-    callApiRef.current = api;
-    if (api && pendingCallStartRef.current) {
-      api.startAudio();
-      pendingCallStartRef.current = false;
-    }
-  }, []);
 
   const synced = cloudMessages !== null;
 
