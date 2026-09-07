@@ -1,7 +1,8 @@
-import { Mic, MicOff, PhoneOff, Volume2 } from "lucide-react";
+import { Mic, MicOff, PhoneOff, Volume2, Volume1 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { requestCallWakeLock, startIncomingRingtone, startRingback } from "@/lib/call-tones";
 
 type CallModalProps = {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export function CallModal({
 }: CallModalProps) {
   const [callState, setCallState] = useState<"ringing" | "connected" | "incoming">(initialState);
   const [isMuted, setIsMuted] = useState(false);
+  const [isSpeaker, setIsSpeaker] = useState(false);
   const [duration, setDuration] = useState(0);
 
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
@@ -160,6 +162,27 @@ export function CallModal({
     };
   }, [isOpen, roomId, currentUserId, initialState, teardown, onClose]);
 
+  // Ring tones: ringback for the caller, chime for the receiver.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (callState === "ringing") {
+      const tone = startRingback();
+      return () => tone.stop();
+    }
+    if (callState === "incoming") {
+      const tone = startIncomingRingtone();
+      return () => tone.stop();
+    }
+    return undefined;
+  }, [isOpen, callState]);
+
+  // Keep the screen awake while the call is up. Hardware proximity ("screen off
+  // on ear") is not exposed to web browsers and needs a native wrapper.
+  useEffect(() => {
+    if (!isOpen) return;
+    return requestCallWakeLock();
+  }, [isOpen]);
+
   useEffect(() => {
     if (callState !== "connected") return;
     const timer = window.setInterval(() => setDuration((d) => d + 1), 1000);
@@ -173,6 +196,30 @@ export function CallModal({
       event: "call-accepted",
       payload: { sender: currentUserId },
     });
+  }
+
+  async function toggleSpeaker() {
+    const audio = remoteAudioRef.current;
+    const next = !isSpeaker;
+    setIsSpeaker(next);
+    if (!audio) return;
+    // Louder in speaker mode; quieter earpiece-style level otherwise.
+    audio.volume = next ? 1 : 0.7;
+    const el = audio as HTMLAudioElement & { setSinkId?: (id: string) => Promise<void> };
+    if (typeof el.setSinkId !== "function") return;
+    try {
+      if (!next) {
+        await el.setSinkId("");
+        return;
+      }
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const speaker = devices.find(
+        (d) => d.kind === "audiooutput" && /speaker/i.test(d.label) && d.deviceId !== "default",
+      );
+      await el.setSinkId(speaker?.deviceId ?? "default");
+    } catch {
+      // Output selection unsupported on this browser; volume change still applies.
+    }
   }
 
   function toggleMute() {
@@ -226,6 +273,15 @@ export function CallModal({
               }`}
             >
               {isMuted ? <MicOff className="size-6" /> : <Mic className="size-6" />}
+            </button>
+            <button
+              onClick={() => void toggleSpeaker()}
+              aria-label={isSpeaker ? "Switch to earpiece" : "Switch to speaker"}
+              className={`rounded-full border border-[#1e2d3d] p-4 ${
+                isSpeaker ? "bg-[#00f2ff]/15 text-[#00f2ff]" : "bg-[#121a22] text-[#80e8ff]"
+              }`}
+            >
+              {isSpeaker ? <Volume2 className="size-6" /> : <Volume1 className="size-6" />}
             </button>
             <button
               onClick={endCall}

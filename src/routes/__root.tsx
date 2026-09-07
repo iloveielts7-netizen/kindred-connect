@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
+import { GlobalCallListener } from "@/components/global-call-listener";
 import { IncomingRequests } from "@/components/incoming-requests";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/hooks/useAuth";
@@ -136,6 +137,7 @@ function RootComponent() {
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
         <IncomingRequests />
+        <GlobalCallListener />
         <Toaster position="top-center" />
       </AuthProvider>
     </QueryClientProvider>
