@@ -3,7 +3,7 @@ import { ArrowLeft, Phone, Send } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 
-import { CallModal, type CallApi } from "@/components/CallModal";
+import { CallModal } from "@/components/CallModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -64,16 +64,8 @@ function RoomPage() {
   const [cloudMessages, setCloudMessages] = useState<CloudMessage[] | null>(null);
   const [draft, setDraft] = useState("");
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+  const [callDirection, setCallDirection] = useState<"ringing" | "incoming">("ringing");
   const endRef = useRef<HTMLDivElement | null>(null);
-  const callApiRef = useRef<CallApi | null>(null);
-  const pendingCallStartRef = useRef(false);
-  const handleCallApi = useCallback((api: CallApi | null) => {
-    callApiRef.current = api;
-    if (api && pendingCallStartRef.current) {
-      api.startAudio();
-      pendingCallStartRef.current = false;
-    }
-  }, []);
 
   const synced = cloudMessages !== null;
 
@@ -98,34 +90,22 @@ function RoomPage() {
     return subscribeLocalRooms(syncLocal);
   }, [syncLocal]);
 
-  const startCall = useCallback(async () => {
+  const startCall = useCallback(() => {
     if (!roomId || !myId) return;
-    const channel = supabase.channel(`call-signal-${roomId}`, {
-      config: { broadcast: { self: false } },
-    });
-    await new Promise<void>((resolve) => {
-      channel.subscribe((status) => {
-        if (status === "SUBSCRIBED") resolve();
-      });
-    });
-    await channel.send({
-      type: "broadcast",
-      event: "signal",
-      payload: { type: "invite", mode: "audio", from: myId },
-    });
-    void supabase.removeChannel(channel);
-    pendingCallStartRef.current = true;
+    setCallDirection("ringing");
     setIsCallModalOpen(true);
   }, [roomId, myId]);
 
+  // Listen for an incoming call invite while the call screen is closed.
   useEffect(() => {
-    if (!roomId || !myId) return;
+    if (!roomId || !myId || isCallModalOpen) return;
     const channel = supabase.channel(`call-signal-${roomId}`, {
       config: { broadcast: { self: false } },
     });
-    channel.on("broadcast", { event: "signal" }, ({ payload }) => {
-      const p = payload as { type?: string; from?: string };
-      if (p.type === "invite" && p.from && p.from !== myId) {
+    channel.on("broadcast", { event: "call-invite" }, ({ payload }) => {
+      const p = payload as { sender?: string };
+      if (p.sender && p.sender !== myId) {
+        setCallDirection("incoming");
         setIsCallModalOpen(true);
       }
     });
@@ -133,7 +113,7 @@ function RoomPage() {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [roomId, myId]);
+  }, [roomId, myId, isCallModalOpen]);
 
 
   // Cloud room + realtime subscription.
@@ -304,10 +284,10 @@ function RoomPage() {
 
       {isCallModalOpen && roomId && myId ? (
         <CallModal
+          isOpen={isCallModalOpen}
           roomId={roomId}
-          meId={myId}
-          peerLabel={peerId}
-          onApi={handleCallApi}
+          currentUserId={myId}
+          initialState={callDirection}
           onClose={() => setIsCallModalOpen(false)}
         />
       ) : null}
