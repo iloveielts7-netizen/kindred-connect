@@ -99,7 +99,7 @@ function RoomPage() {
   // Listen for an incoming call invite while the call screen is closed.
   useEffect(() => {
     if (!roomId || !myId || isCallModalOpen) return;
-    const channel = supabase.channel(`call-signal-${roomId}-watch`, {
+    const channel = supabase.channel(`call-signal-${roomId}`, {
       config: { broadcast: { self: false } },
     });
     channel.on("broadcast", { event: "call-invite" }, ({ payload }) => {
