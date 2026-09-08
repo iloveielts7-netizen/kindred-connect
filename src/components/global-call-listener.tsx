@@ -49,7 +49,7 @@ export function GlobalCallListener() {
     void sync();
     const unsubscribe = subscribeLocalRooms(() => void sync());
     // Re-sync periodically so rooms created on another device are picked up.
-    const interval = window.setInterval(() => void sync(), 30_000);
+    const interval = window.setInterval(() => void sync(), 15_000);
     return () => {
       unsubscribe();
       window.clearInterval(interval);
@@ -62,7 +62,7 @@ export function GlobalCallListener() {
     const channels = peerIds.map((peerId) => {
       const roomId = roomIdFor(myId, peerId);
       const channel = supabase.channel(`call-signal-${roomId}`, {
-        config: { broadcast: { self: false } },
+        config: { broadcast: { self: false, ack: true } },
       });
       channel.on("broadcast", { event: "call-invite" }, ({ payload }) => {
         const sender = (payload as { sender?: string }).sender;
