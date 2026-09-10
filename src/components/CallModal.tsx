@@ -376,17 +376,42 @@ export const CallModal: React.FC<CallModalProps> = ({
     <div className="fixed inset-0 z-50 bg-[#090e13]/95 backdrop-blur-md flex flex-col items-center justify-between p-8 text-white">
       <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
 
-      <div className="flex flex-col items-center mt-12">
-        <div
-          className={`w-24 h-24 rounded-full bg-[#121a22] border-2 ${callState === 'failed' ? 'border-rose-500' : 'border-[#00f2ff]'} flex items-center justify-center animate-pulse shadow-[0_0_30px_rgba(0,242,255,0.3)]`}
-        >
-          {callState === 'failed' ? (
-            <AlertCircle className="w-10 h-10 text-rose-500" />
-          ) : (
-            <PhoneCall className="w-10 h-10 text-[#00f2ff]" />
-          )}
-        </div>
-        <h2 className="text-2xl font-semibold mt-6 tracking-wide">Wynse Secure Call</h2>
+      {/* Remote video fills the screen once the peer's camera arrives. */}
+      <video
+        ref={remoteVideoRef}
+        autoPlay
+        playsInline
+        className={`absolute inset-0 h-full w-full object-cover ${
+          callState === 'connected' && hasRemoteVideo ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
+
+      {/* Local preview (picture-in-picture) */}
+      <video
+        ref={localVideoRef}
+        autoPlay
+        playsInline
+        muted
+        className={`absolute right-4 top-4 z-10 h-40 w-28 rounded-2xl border border-[#1e2d3d] bg-[#090e13] object-cover shadow-[0_0_20px_rgba(0,242,255,0.2)] ${
+          isCameraOn ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
+
+      <div className="relative z-10 flex flex-col items-center mt-12">
+        {!(callState === 'connected' && hasRemoteVideo) && (
+          <div
+            className={`w-24 h-24 rounded-full bg-[#121a22] border-2 ${callState === 'failed' ? 'border-rose-500' : 'border-[#00f2ff]'} flex items-center justify-center animate-pulse shadow-[0_0_30px_rgba(0,242,255,0.3)]`}
+          >
+            {callState === 'failed' ? (
+              <AlertCircle className="w-10 h-10 text-rose-500" />
+            ) : (
+              <PhoneCall className="w-10 h-10 text-[#00f2ff]" />
+            )}
+          </div>
+        )}
+        <h2 className="text-2xl font-semibold mt-6 tracking-wide drop-shadow-lg">
+          Wynse Secure Call
+        </h2>
         <p className={`mt-2 text-sm ${callState === 'failed' ? 'text-rose-400' : 'text-[#80e8ff]'}`}>
           {callState === 'ringing' && 'Calling secure peer...'}
           {callState === 'incoming' && 'Incoming encrypted call...'}
