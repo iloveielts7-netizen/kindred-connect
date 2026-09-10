@@ -1,5 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Mic, MicOff, PhoneOff, Volume2, VolumeX, AlertCircle, PhoneCall } from 'lucide-react';
+import {
+  Mic,
+  MicOff,
+  PhoneOff,
+  Volume2,
+  VolumeX,
+  AlertCircle,
+  PhoneCall,
+  Video,
+  VideoOff,
+} from 'lucide-react';
 
 import { supabase } from '@/integrations/supabase/client';
 
