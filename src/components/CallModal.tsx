@@ -136,12 +136,26 @@ export const CallModal: React.FC<CallModalProps> = ({
 
     const initCall = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        // HD video + audio; fall back to audio-only if no camera is available.
+        let stream: MediaStream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+          });
+        } catch {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        }
         if (!isMounted) {
           stream.getTracks().forEach((t) => t.stop());
           return;
         }
         localStreamRef.current = stream;
+        setIsCameraOn(stream.getVideoTracks().length > 0);
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+          localVideoRef.current.play().catch(() => {});
+        }
 
         const pc = new RTCPeerConnection({
           iceServers: [
