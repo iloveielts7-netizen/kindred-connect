@@ -420,7 +420,7 @@ export const CallModal: React.FC<CallModalProps> = ({
         </p>
       </div>
 
-      <div className="flex items-center gap-6 mb-12">
+      <div className="relative z-10 flex items-center gap-5 mb-12">
         {callState === 'incoming' ? (
           <>
             <button
