@@ -446,6 +446,13 @@ export const CallModal: React.FC<CallModalProps> = ({
               {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
             </button>
             <button
+              onClick={toggleCamera}
+              aria-label={isCameraOn ? 'Turn camera off' : 'Turn camera on'}
+              className={`p-4 rounded-full border border-[#1e2d3d] ${isCameraOn ? 'bg-[#121a22] text-[#00f2ff]' : 'bg-rose-500/20 text-rose-400'}`}
+            >
+              {isCameraOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
+            </button>
+            <button
               onClick={toggleSpeaker}
               aria-label={isSpeakerOn ? 'Switch to earpiece' : 'Switch to speaker'}
               className={`p-4 rounded-full border border-[#1e2d3d] ${isSpeakerOn ? 'bg-[#00f2ff]/20 text-[#00f2ff]' : 'bg-[#121a22] text-gray-400'}`}
