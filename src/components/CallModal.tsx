@@ -349,6 +349,13 @@ export const CallModal: React.FC<CallModalProps> = ({
     }
   };
 
+  const toggleCamera = () => {
+    const track = localStreamRef.current?.getVideoTracks()[0];
+    if (!track) return;
+    track.enabled = !isCameraOn;
+    setIsCameraOn(!isCameraOn);
+  };
+
   const toggleSpeaker = () => {
     if (remoteAudioRef.current) {
       const nextSpeakerState = !isSpeakerOn;
