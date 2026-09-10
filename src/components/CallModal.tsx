@@ -172,10 +172,19 @@ export const CallModal: React.FC<CallModalProps> = ({
         });
 
         pc.ontrack = (event) => {
-          if (remoteAudioRef.current && event.streams[0]) {
-            remoteAudioRef.current.srcObject = event.streams[0];
+          const remoteStream = event.streams[0];
+          if (!remoteStream) return;
+          if (remoteAudioRef.current) {
+            remoteAudioRef.current.srcObject = remoteStream;
             remoteAudioRef.current.play().catch((e) => console.log('Audio play error:', e));
           }
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = remoteStream;
+            remoteVideoRef.current.play().catch(() => {});
+          }
+          setHasRemoteVideo(remoteStream.getVideoTracks().length > 0);
+          remoteStream.onaddtrack = () =>
+            setHasRemoteVideo(remoteStream.getVideoTracks().length > 0);
         };
 
         pc.onicecandidate = (event) => {
