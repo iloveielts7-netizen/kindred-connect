@@ -129,6 +129,8 @@ export const CallModal: React.FC<CallModalProps> = ({
     setCallState(initialState);
     setDuration(0);
     setIsMuted(false);
+    setIsCameraOn(true);
+    setHasRemoteVideo(false);
     setErrorMessage(null);
     startRingingSound(initialState === 'incoming' ? 'incoming' : 'calling');
 
