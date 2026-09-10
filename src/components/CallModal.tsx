@@ -32,6 +32,8 @@ export const CallModal: React.FC<CallModalProps> = ({
   const [callState, setCallState] = useState<'ringing' | 'connected' | 'incoming' | 'failed'>(initialState);
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(false);
+  const [isCameraOn, setIsCameraOn] = useState(true);
+  const [hasRemoteVideo, setHasRemoteVideo] = useState(false);
   const [duration, setDuration] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
