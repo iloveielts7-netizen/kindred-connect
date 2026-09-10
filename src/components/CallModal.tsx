@@ -1,5 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Mic, MicOff, PhoneOff, Volume2, VolumeX, AlertCircle, PhoneCall } from 'lucide-react';
+import {
+  Mic,
+  MicOff,
+  PhoneOff,
+  Volume2,
+  VolumeX,
+  AlertCircle,
+  PhoneCall,
+  Video,
+  VideoOff,
+} from 'lucide-react';
 
 import { supabase } from '@/integrations/supabase/client';
 
@@ -22,12 +32,16 @@ export const CallModal: React.FC<CallModalProps> = ({
   const [callState, setCallState] = useState<'ringing' | 'connected' | 'incoming' | 'failed'>(initialState);
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(false);
+  const [isCameraOn, setIsCameraOn] = useState(true);
+  const [hasRemoteVideo, setHasRemoteVideo] = useState(false);
   const [duration, setDuration] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
+  const localVideoRef = useRef<HTMLVideoElement | null>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const channelRef = useRef<any>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const ringIntervalRef = useRef<any>(null);
@@ -115,17 +129,33 @@ export const CallModal: React.FC<CallModalProps> = ({
     setCallState(initialState);
     setDuration(0);
     setIsMuted(false);
+    setIsCameraOn(true);
+    setHasRemoteVideo(false);
     setErrorMessage(null);
     startRingingSound(initialState === 'incoming' ? 'incoming' : 'calling');
 
     const initCall = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        // HD video + audio; fall back to audio-only if no camera is available.
+        let stream: MediaStream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+          });
+        } catch {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        }
         if (!isMounted) {
           stream.getTracks().forEach((t) => t.stop());
           return;
         }
         localStreamRef.current = stream;
+        setIsCameraOn(stream.getVideoTracks().length > 0);
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+          localVideoRef.current.play().catch(() => {});
+        }
 
         const pc = new RTCPeerConnection({
           iceServers: [
@@ -142,10 +172,19 @@ export const CallModal: React.FC<CallModalProps> = ({
         });
 
         pc.ontrack = (event) => {
-          if (remoteAudioRef.current && event.streams[0]) {
-            remoteAudioRef.current.srcObject = event.streams[0];
+          const remoteStream = event.streams[0];
+          if (!remoteStream) return;
+          if (remoteAudioRef.current) {
+            remoteAudioRef.current.srcObject = remoteStream;
             remoteAudioRef.current.play().catch((e) => console.log('Audio play error:', e));
           }
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = remoteStream;
+            remoteVideoRef.current.play().catch(() => {});
+          }
+          setHasRemoteVideo(remoteStream.getVideoTracks().length > 0);
+          remoteStream.onaddtrack = () =>
+            setHasRemoteVideo(remoteStream.getVideoTracks().length > 0);
         };
 
         pc.onicecandidate = (event) => {
@@ -310,6 +349,13 @@ export const CallModal: React.FC<CallModalProps> = ({
     }
   };
 
+  const toggleCamera = () => {
+    const track = localStreamRef.current?.getVideoTracks()[0];
+    if (!track) return;
+    track.enabled = !isCameraOn;
+    setIsCameraOn(!isCameraOn);
+  };
+
   const toggleSpeaker = () => {
     if (remoteAudioRef.current) {
       const nextSpeakerState = !isSpeakerOn;
@@ -330,17 +376,42 @@ export const CallModal: React.FC<CallModalProps> = ({
     <div className="fixed inset-0 z-50 bg-[#090e13]/95 backdrop-blur-md flex flex-col items-center justify-between p-8 text-white">
       <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
 
-      <div className="flex flex-col items-center mt-12">
-        <div
-          className={`w-24 h-24 rounded-full bg-[#121a22] border-2 ${callState === 'failed' ? 'border-rose-500' : 'border-[#00f2ff]'} flex items-center justify-center animate-pulse shadow-[0_0_30px_rgba(0,242,255,0.3)]`}
-        >
-          {callState === 'failed' ? (
-            <AlertCircle className="w-10 h-10 text-rose-500" />
-          ) : (
-            <PhoneCall className="w-10 h-10 text-[#00f2ff]" />
-          )}
-        </div>
-        <h2 className="text-2xl font-semibold mt-6 tracking-wide">Wynse Secure Call</h2>
+      {/* Remote video fills the screen once the peer's camera arrives. */}
+      <video
+        ref={remoteVideoRef}
+        autoPlay
+        playsInline
+        className={`absolute inset-0 h-full w-full object-cover ${
+          callState === 'connected' && hasRemoteVideo ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
+
+      {/* Local preview (picture-in-picture) */}
+      <video
+        ref={localVideoRef}
+        autoPlay
+        playsInline
+        muted
+        className={`absolute right-4 top-4 z-10 h-40 w-28 rounded-2xl border border-[#1e2d3d] bg-[#090e13] object-cover shadow-[0_0_20px_rgba(0,242,255,0.2)] ${
+          isCameraOn ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
+
+      <div className="relative z-10 flex flex-col items-center mt-12">
+        {!(callState === 'connected' && hasRemoteVideo) && (
+          <div
+            className={`w-24 h-24 rounded-full bg-[#121a22] border-2 ${callState === 'failed' ? 'border-rose-500' : 'border-[#00f2ff]'} flex items-center justify-center animate-pulse shadow-[0_0_30px_rgba(0,242,255,0.3)]`}
+          >
+            {callState === 'failed' ? (
+              <AlertCircle className="w-10 h-10 text-rose-500" />
+            ) : (
+              <PhoneCall className="w-10 h-10 text-[#00f2ff]" />
+            )}
+          </div>
+        )}
+        <h2 className="text-2xl font-semibold mt-6 tracking-wide drop-shadow-lg">
+          Wynse Secure Call
+        </h2>
         <p className={`mt-2 text-sm ${callState === 'failed' ? 'text-rose-400' : 'text-[#80e8ff]'}`}>
           {callState === 'ringing' && 'Calling secure peer...'}
           {callState === 'incoming' && 'Incoming encrypted call...'}
@@ -349,7 +420,7 @@ export const CallModal: React.FC<CallModalProps> = ({
         </p>
       </div>
 
-      <div className="flex items-center gap-6 mb-12">
+      <div className="relative z-10 flex items-center gap-5 mb-12">
         {callState === 'incoming' ? (
           <>
             <button
@@ -373,6 +444,13 @@ export const CallModal: React.FC<CallModalProps> = ({
               className={`p-4 rounded-full border border-[#1e2d3d] ${isMuted ? 'bg-rose-500/20 text-rose-400' : 'bg-[#121a22] text-[#00f2ff]'}`}
             >
               {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+            </button>
+            <button
+              onClick={toggleCamera}
+              aria-label={isCameraOn ? 'Turn camera off' : 'Turn camera on'}
+              className={`p-4 rounded-full border border-[#1e2d3d] ${isCameraOn ? 'bg-[#121a22] text-[#00f2ff]' : 'bg-rose-500/20 text-rose-400'}`}
+            >
+              {isCameraOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
             </button>
             <button
               onClick={toggleSpeaker}
