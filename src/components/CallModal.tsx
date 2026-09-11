@@ -9,6 +9,7 @@ import {
   PhoneCall,
   Video,
   VideoOff,
+  SwitchCamera,
 } from 'lucide-react';
 
 import { supabase } from '@/integrations/supabase/client';
@@ -18,7 +19,7 @@ interface CallModalProps {
   roomId: string;
   currentUserId: string;
   /** "incoming" when this device received the call invite. */
-  initialState?: 'ringing' | 'incoming';
+  initialState?: 'ringing' | 'connected' | 'incoming' | 'failed';
   onClose: () => void;
 }
 
@@ -33,6 +34,8 @@ export const CallModal: React.FC<CallModalProps> = ({
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(true);
+  const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('user');
+  const [isZoomed, setIsZoomed] = useState(false);
   const [hasRemoteVideo, setHasRemoteVideo] = useState(false);
   const [duration, setDuration] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -130,6 +133,8 @@ export const CallModal: React.FC<CallModalProps> = ({
     setDuration(0);
     setIsMuted(false);
     setIsCameraOn(true);
+    setCameraFacing('user');
+    setIsZoomed(false);
     setHasRemoteVideo(false);
     setErrorMessage(null);
     startRingingSound(initialState === 'incoming' ? 'incoming' : 'calling');
@@ -356,6 +361,76 @@ export const CallModal: React.FC<CallModalProps> = ({
     setIsCameraOn(!isCameraOn);
   };
 
+  const toggleCameraFacing = async () => {
+    const nextFacing = cameraFacing === 'user' ? 'environment' : 'user';
+    setCameraFacing(nextFacing);
+
+    const stream = localStreamRef.current;
+    const pc = peerConnectionRef.current;
+    if (!stream || !pc) return;
+
+    const oldVideoTrack = stream.getVideoTracks()[0];
+    if (!oldVideoTrack) return;
+
+    const videoConstraint =
+      nextFacing === 'environment'
+        ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: { exact: 'environment' } }
+        : { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' };
+
+    const tryGetVideo = async (constraint: any) => {
+      return navigator.mediaDevices.getUserMedia({ video: constraint });
+    };
+
+    try {
+      const newStream = await tryGetVideo(videoConstraint);
+      const newVideoTrack = newStream.getVideoTracks()[0];
+      if (!newVideoTrack) return;
+
+      oldVideoTrack.stop();
+      stream.removeTrack(oldVideoTrack);
+      stream.addTrack(newVideoTrack);
+
+      const sender = pc.getSenders().find((s) => s.track?.kind === 'video');
+      if (sender) await sender.replaceTrack(newVideoTrack);
+
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+        localVideoRef.current.play().catch(() => {});
+      }
+      setIsCameraOn(true);
+    } catch (e) {
+      // Fallback to non-exact environment if exact mode fails
+      if (nextFacing === 'environment') {
+        try {
+          const fallbackStream = await tryGetVideo({
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: 'environment',
+          });
+          const fallbackVideo = fallbackStream.getVideoTracks()[0];
+          if (!fallbackVideo) return;
+
+          oldVideoTrack.stop();
+          stream.removeTrack(oldVideoTrack);
+          stream.addTrack(fallbackVideo);
+
+          const sender = pc.getSenders().find((s) => s.track?.kind === 'video');
+          if (sender) await sender.replaceTrack(fallbackVideo);
+
+          if (localVideoRef.current) {
+            localVideoRef.current.srcObject = stream;
+            localVideoRef.current.play().catch(() => {});
+          }
+          setIsCameraOn(true);
+        } catch (fallbackErr) {
+          console.error('Camera flip fallback failed:', fallbackErr);
+        }
+      } else {
+        console.error('Camera flip failed:', e);
+      }
+    }
+  };
+
   const toggleSpeaker = () => {
     if (remoteAudioRef.current) {
       const nextSpeakerState = !isSpeakerOn;
@@ -376,6 +451,13 @@ export const CallModal: React.FC<CallModalProps> = ({
     <div className="fixed inset-0 z-50 bg-[#090e13]/95 backdrop-blur-md flex flex-col items-center justify-between p-8 text-white">
       <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
 
+      {/* Live duration timer in the top-left corner */}
+      {callState === 'connected' && (
+        <div className="absolute top-4 left-4 z-20 text-lg font-medium text-white drop-shadow-md">
+          {formatTime(duration)}
+        </div>
+      )}
+
       {/* Remote video fills the screen once the peer's camera arrives. */}
       <video
         ref={remoteVideoRef}
@@ -386,16 +468,23 @@ export const CallModal: React.FC<CallModalProps> = ({
         }`}
       />
 
-      {/* Local preview (picture-in-picture) */}
-      <video
-        ref={localVideoRef}
-        autoPlay
-        playsInline
-        muted
-        className={`absolute right-4 top-4 z-10 h-40 w-28 rounded-2xl border border-[#1e2d3d] bg-[#090e13] object-cover shadow-[0_0_20px_rgba(0,242,255,0.2)] ${
-          isCameraOn ? 'opacity-100' : 'opacity-0'
+      {/* Local preview (picture-in-picture) — tap to zoom */}
+      <div
+        onClick={() => setIsZoomed((z) => !z)}
+        className={`absolute right-4 top-4 z-10 cursor-pointer transition-transform duration-200 ease-out ${
+          isZoomed ? 'scale-150' : 'scale-100'
         }`}
-      />
+      >
+        <video
+          ref={localVideoRef}
+          autoPlay
+          playsInline
+          muted
+          className={`h-40 w-28 rounded-2xl border border-[#1e2d3d] bg-[#090e13] object-cover shadow-[0_0_20px_rgba(0,242,255,0.2)] ${
+            isCameraOn ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+      </div>
 
       <div className="relative z-10 flex flex-col items-center mt-12">
         {!(callState === 'connected' && hasRemoteVideo) && (
@@ -409,15 +498,13 @@ export const CallModal: React.FC<CallModalProps> = ({
             )}
           </div>
         )}
-        <h2 className="text-2xl font-semibold mt-6 tracking-wide drop-shadow-lg">
-          Wynse Secure Call
-        </h2>
-        <p className={`mt-2 text-sm ${callState === 'failed' ? 'text-rose-400' : 'text-[#80e8ff]'}`}>
-          {callState === 'ringing' && 'Calling secure peer...'}
-          {callState === 'incoming' && 'Incoming encrypted call...'}
-          {callState === 'connected' && `Connected • ${formatTime(duration)}`}
-          {callState === 'failed' && (errorMessage || 'Connection failed.')}
-        </p>
+        {callState !== 'connected' && (
+          <p className={`mt-6 text-sm ${callState === 'failed' ? 'text-rose-400' : 'text-[#80e8ff]'}`}>
+            {callState === 'ringing' && 'Calling secure peer...'}
+            {callState === 'incoming' && 'Incoming encrypted call...'}
+            {callState === 'failed' && (errorMessage || 'Connection failed.')}
+          </p>
+        )}
       </div>
 
       <div className="relative z-10 flex items-center gap-5 mb-12">
@@ -452,6 +539,15 @@ export const CallModal: React.FC<CallModalProps> = ({
             >
               {isCameraOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
             </button>
+            {isCameraOn && (
+              <button
+                onClick={() => void toggleCameraFacing()}
+                aria-label="Flip camera"
+                className="p-4 rounded-full border border-[#1e2d3d] bg-[#121a22] text-[#00f2ff]"
+              >
+                <SwitchCamera className="w-6 h-6" />
+              </button>
+            )}
             <button
               onClick={toggleSpeaker}
               aria-label={isSpeakerOn ? 'Switch to earpiece' : 'Switch to speaker'}
